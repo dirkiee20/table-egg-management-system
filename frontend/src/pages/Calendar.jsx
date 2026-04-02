@@ -3,7 +3,7 @@ import {
   format, addMonths, subMonths, startOfMonth, endOfMonth, 
   startOfWeek, endOfWeek, isSameMonth, isSameDay, addDays 
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, Loader2, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, Loader2, AlertCircle, X } from 'lucide-react';
 import { api } from '../services/api';
 import '../App.css';
 
@@ -12,6 +12,14 @@ const Calendar = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    date: new Date('2026-04-02').toISOString().split('T')[0],
+    type: 'general'
+  });
 
   useEffect(() => {
     loadEvents();
@@ -28,6 +36,21 @@ const Calendar = () => {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateEvent = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await api.calendar.create(formData);
+      await loadEvents();
+      setIsModalOpen(false);
+      setFormData({ ...formData, title: '' });
+    } catch (err) {
+      setError('Failed to create calendar event.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -130,7 +153,7 @@ const Calendar = () => {
     <div className="page-container">
       <div className="page-header" style={{ marginBottom: '24px' }}>
         <h2>Calendar</h2>
-        <button className="btn-primary" onClick={() => {/* Future Add Handler */}}>
+        <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
           <Plus size={18} /> Add Event
         </button>
       </div>
@@ -186,6 +209,44 @@ const Calendar = () => {
         </div>
       </div>
       
+      {isModalOpen && (
+        <div className="modal-overlay" onClick={() => !isSubmitting && setIsModalOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <h3>Add Calendar Event</h3>
+              <button className="close-btn" onClick={() => !isSubmitting && setIsModalOpen(false)}><X size={20} /></button>
+            </div>
+            
+            <form onSubmit={handleCreateEvent} className="standard-form">
+              <div className="form-group">
+                <label>Event Title</label>
+                <input type="text" required placeholder="e.g. Vet Visit" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} disabled={isSubmitting} />
+              </div>
+
+              <div className="form-group">
+                <label>Event Date</label>
+                <input type="date" required value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} disabled={isSubmitting} />
+              </div>
+
+              <div className="form-group">
+                <label>Event Category</label>
+                <select required value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} disabled={isSubmitting}>
+                  <option value="general">General / Routine</option>
+                  <option value="vaccination">Vaccination</option>
+                  <option value="hatchery">Hatchery / Incubator</option>
+                </select>
+              </div>
+
+              <div className="modal-actions" style={{ marginTop: '24px' }}>
+                <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)} disabled={isSubmitting}>Cancel</button>
+                <button type="submit" className="btn-primary" disabled={isSubmitting}>
+                  {isSubmitting ? <Loader2 className="spin" size={18} /> : 'Save Event'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

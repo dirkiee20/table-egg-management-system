@@ -17,6 +17,8 @@ const VaccinationRecords = () => {
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const [flocksList, setFlocksList] = useState([]);
+
   useEffect(() => {
     loadRecords();
   }, []);
@@ -25,10 +27,14 @@ const VaccinationRecords = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await api.vaccinations.getAll();
+      const [data, flocksData] = await Promise.all([
+        api.vaccinations.getAll(),
+        api.flocks.getAll().catch(() => []) // Gracefully fail if non-admin/perms
+      ]);
       setRecords(data);
+      setFlocksList(flocksData.filter(f => f.status === 'Active'));
     } catch (err) {
-      setError('Failed to fetch vaccination records.');
+      setError('Failed to fetch data.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -91,9 +97,10 @@ const VaccinationRecords = () => {
                 <label>Target Flock</label>
                 <select required value={flock} onChange={e => setFlock(e.target.value)}>
                   <option value="">-- Select Flock --</option>
-                  <option value="F-01">F-01 (House A)</option>
-                  <option value="F-02">F-02 (House B)</option>
-                  <option value="F-03">F-03 (House C)</option>
+                  {flocksList.map(f => (
+                    <option key={f.id} value={f.batchId}>{f.house} ({f.batchId})</option>
+                  ))}
+                  {flocksList.length === 0 && <option value="" disabled>Loading flocks...</option>}
                 </select>
               </div>
               <div className="form-group">
