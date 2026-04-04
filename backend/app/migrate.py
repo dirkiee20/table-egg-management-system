@@ -46,6 +46,19 @@ try:
 except Exception as e:
     print("Error backfilling:", e)
 
+# Feed Consumption Table
+try:
+    cursor.execute('''CREATE TABLE IF NOT EXISTS feed_consumption (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date VARCHAR,
+        flockId VARCHAR,
+        feedConsumedKgs FLOAT,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    )''')
+    print("Ensured feed_consumption table exists")
+except Exception as e:
+    print("Error creating feed_consumption table:", e)
+
 conn.commit()
 conn.close()
 print("Migration completed.")
