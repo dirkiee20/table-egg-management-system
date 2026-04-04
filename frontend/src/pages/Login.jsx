@@ -1,28 +1,23 @@
 import React, { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Egg, Loader2, AlertCircle } from 'lucide-react';
+import { Egg, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import '../App.css';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { login, user } = useAuth();
-  const navigate = useNavigate();
+  const [showPass, setShowPass] = useState(false);
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
+  const { login, user }         = useAuth();
+  const navigate                = useNavigate();
 
-  // If already logged in, redirect immediately to dashboard
-  if (user) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  if (user) return <Navigate to="/dashboard" replace />;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
-      setError('Please enter both email and password.');
-      return;
-    }
+    if (!email || !password) { setError('Please enter both email and password.'); return; }
     try {
       setLoading(true);
       setError('');
@@ -36,50 +31,182 @@ const Login = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8fafc' }}>
-      <div className="card" style={{ maxWidth: '400px', width: '100%', padding: '40px 32px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{ backgroundColor: '#eff6ff', display: 'inline-flex', padding: '16px', borderRadius: '50%', color: '#3b82f6', marginBottom: '16px' }}>
-             <Egg size={40} />
-          </div>
-          <h2 style={{ fontSize: '1.5rem', color: 'var(--text-main)', marginBottom: '8px' }}>EggManager Login</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Enter your credentials to access the system.</p>
-        </div>
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      background: 'linear-gradient(135deg, #0a0f1e 0%, #0f172a 50%, #1a2234 100%)',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Background decoration */}
+      <div style={{
+        position: 'absolute', inset: 0, opacity: 0.05,
+        backgroundImage: 'radial-gradient(circle at 25% 25%, #eab308 0%, transparent 50%), radial-gradient(circle at 75% 75%, #3b82f6 0%, transparent 50%)',
+        pointerEvents: 'none'
+      }} />
 
-        {error && (
-          <div style={{ padding: '12px', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '6px', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px' }}>
-            <AlertCircle size={16} /> {error}
-          </div>
-        )}
+      {/* Left panel – branding */}
+      <div style={{
+        flex: 1, display: 'flex', flexDirection: 'column',
+        justifyContent: 'center', padding: '48px',
+        display: 'none'
+      }} className="login-brand-panel">
+        <div style={{ fontSize: '3rem', marginBottom: '24px' }}>🐣</div>
+        <h1 style={{ color: '#fff', fontSize: '2rem', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '12px' }}>
+          EggManager
+        </h1>
+        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '1rem', lineHeight: 1.7, maxWidth: '340px' }}>
+          A professional farm operations platform built to help you track flocks, production, inventory, and financials—all in one place.
+        </p>
+      </div>
 
-        <form onSubmit={handleSubmit} className="standard-form" style={{ padding: 0 }}>
-          <div className="form-group">
-            <label>Email Address / Username</label>
-            <input 
-              type="text" 
-              placeholder="admin@farm.com" 
-              value={email} 
-              onChange={e => setEmail(e.target.value)} 
-            />
+      {/* Right panel – form */}
+      <div style={{
+        flex: '0 0 auto', width: '100%', maxWidth: '440px',
+        margin: 'auto',
+        padding: '20px'
+      }}>
+        <div style={{
+          background: 'rgba(255,255,255,0.04)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: '20px',
+          padding: '40px 36px',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+          animation: 'scaleIn 0.3s ease'
+        }}>
+          {/* Logo */}
+          <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+            <div style={{
+              width: '60px', height: '60px',
+              background: 'linear-gradient(135deg, #eab308, #ca8a04)',
+              borderRadius: '18px',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '1.75rem', marginBottom: '16px',
+              boxShadow: '0 4px 20px rgba(234,179,8,0.3)'
+            }}>
+              🐣
+            </div>
+            <h2 style={{ color: '#ffffff', fontSize: '1.5rem', fontWeight: '700', marginBottom: '6px', letterSpacing: '-0.01em' }}>
+              Welcome back
+            </h2>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem' }}>
+              Sign in to your EggManager account
+            </p>
           </div>
-          <div className="form-group">
-            <label>Password</label>
-            <input 
-              type="password" 
-              placeholder="••••••••" 
-              value={password} 
-              onChange={e => setPassword(e.target.value)} 
-            />
-          </div>
-          <button type="submit" className="btn-primary" style={{ width: '100%', padding: '12px', fontSize: '1rem', marginTop: '8px' }} disabled={loading}>
-            {loading ? <Loader2 className="spin" size={20}/> : 'Secure Sign In'}
-          </button>
-        </form>
 
-        <div style={{ marginTop: '32px', padding: '16px', backgroundColor: '#f1f5f9', borderRadius: '8px', fontSize: '0.75rem', color: '#64748b' }}>
-          <p style={{ marginBottom: '8px', fontWeight: 'bold' }}>Demo Accounts:</p>
-          <p>Admin: admin@farm.com / admin123</p>
-          <p>Staff: staff@farm.com / staff123</p>
+          {error && (
+            <div style={{
+              padding: '12px 14px',
+              background: 'rgba(220,38,38,0.15)',
+              border: '1px solid rgba(220,38,38,0.3)',
+              color: '#f87171',
+              borderRadius: '10px',
+              fontSize: '0.85rem',
+              display: 'flex', alignItems: 'center', gap: '8px',
+              marginBottom: '20px',
+              animation: 'slideDown 0.2s ease'
+            }}>
+              <AlertCircle size={16} style={{ flexShrink: 0 }} /> {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '600', color: 'rgba(255,255,255,0.6)', marginBottom: '7px', letterSpacing: '0.01em' }}>
+                Email Address
+              </label>
+              <input
+                type="text"
+                placeholder="admin@farm.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                autoComplete="email"
+                style={{
+                  width: '100%', padding: '11px 14px',
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1.5px solid rgba(255,255,255,0.1)',
+                  borderRadius: '10px',
+                  color: '#ffffff',
+                  fontSize: '0.9rem',
+                  outline: 'none',
+                  transition: 'border-color 0.15s ease, box-shadow 0.15s ease'
+                }}
+                onFocus={e => { e.target.style.borderColor = '#eab308'; e.target.style.boxShadow = '0 0 0 3px rgba(234,179,8,0.15)'; }}
+                onBlur={e  => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '28px' }}>
+              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '600', color: 'rgba(255,255,255,0.6)', marginBottom: '7px' }}>
+                Password
+              </label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPass ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  style={{
+                    width: '100%', padding: '11px 44px 11px 14px',
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1.5px solid rgba(255,255,255,0.1)',
+                    borderRadius: '10px',
+                    color: '#ffffff',
+                    fontSize: '0.9rem',
+                    outline: 'none',
+                    transition: 'border-color 0.15s ease, box-shadow 0.15s ease'
+                  }}
+                  onFocus={e => { e.target.style.borderColor = '#eab308'; e.target.style.boxShadow = '0 0 0 3px rgba(234,179,8,0.15)'; }}
+                  onBlur={e  => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass(s => !s)}
+                  style={{
+                    position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                    color: 'rgba(255,255,255,0.3)', padding: '4px', borderRadius: '4px'
+                  }}
+                >
+                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: '100%', padding: '12px',
+                background: loading ? 'rgba(234,179,8,0.5)' : 'linear-gradient(135deg, #eab308, #ca8a04)',
+                color: '#1a1000',
+                fontWeight: '700', fontSize: '0.9375rem',
+                borderRadius: '10px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                boxShadow: loading ? 'none' : '0 4px 14px rgba(234,179,8,0.3)'
+              }}
+              onMouseEnter={e => { if (!loading) { e.target.style.transform = 'translateY(-1px)'; e.target.style.boxShadow = '0 6px 20px rgba(234,179,8,0.4)'; } }}
+              onMouseLeave={e => { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = loading ? 'none' : '0 4px 14px rgba(234,179,8,0.3)'; }}
+            >
+              {loading ? <Loader2 className="spin" size={18} /> : <Egg size={18} />}
+              {loading ? 'Signing in…' : 'Sign In'}
+            </button>
+          </form>
+
+          <div style={{
+            marginTop: '28px', padding: '14px 16px',
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.06)',
+            borderRadius: '10px',
+            fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)'
+          }}>
+            <p style={{ fontWeight: '700', marginBottom: '6px', color: 'rgba(255,255,255,0.4)' }}>Demo Accounts</p>
+            <p>Admin: <code style={{ color: 'rgba(255,255,255,0.55)' }}>admin@farm.com</code> / <code style={{ color: 'rgba(255,255,255,0.55)' }}>admin123</code></p>
+            <p style={{ marginTop: '4px' }}>Staff: <code style={{ color: 'rgba(255,255,255,0.55)' }}>staff@farm.com</code> / <code style={{ color: 'rgba(255,255,255,0.55)' }}>staff123</code></p>
+          </div>
         </div>
       </div>
     </div>

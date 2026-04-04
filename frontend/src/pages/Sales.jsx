@@ -110,9 +110,7 @@ const Sales = () => {
       </div>
 
       {errorMarker && !isModalOpen && (
-        <div style={{ padding: '12px 16px', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '6px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500' }}>
-          <AlertCircle size={20} /> {errorMarker}
-        </div>
+        <div className="alert alert-error"><AlertCircle size={16} />{errorMarker}</div>
       )}
 
       <div className="card">
@@ -156,9 +154,9 @@ const Sales = () => {
                   <td className="text-right font-medium">₱{sale.total?.toFixed(2)}</td>
                   <td>
                     {sale.status === 'Paid' ? (
-                      <span className="status-badge active"><CheckCircle2 size={12} style={{marginRight: 4}}/> Paid</span>
+                      <span className="badge badge-success"><CheckCircle2 size={11} /> Paid</span>
                     ) : (
-                      <span className="status-badge" style={{backgroundColor: '#fef3c7', color: '#92400e'}}>Unpaid</span>
+                      <span className="badge badge-warning">Unpaid</span>
                     )}
                   </td>
                   <td className="actions-cell">
@@ -182,8 +180,8 @@ const Sales = () => {
             </div>
 
             {errorMarker && (
-              <div style={{ padding: '12px 16px', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '6px', margin: '0 24px 16px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem' }}>
-                <AlertCircle size={18} style={{flexShrink:0}}/> {errorMarker}
+              <div className="alert alert-error" style={{ margin: '0 0 16px' }}>
+                <AlertCircle size={16} style={{ flexShrink: 0 }} /> {errorMarker}
               </div>
             )}
             

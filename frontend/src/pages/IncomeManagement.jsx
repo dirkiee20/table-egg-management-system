@@ -74,15 +74,11 @@ const IncomeManagement = () => {
         </div>
       </div>
 
-      {errorMsg && (
-        <div style={{ padding: '12px 16px', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '6px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500' }}>
-          <AlertCircle size={20} /> {errorMsg}
-        </div>
-      )}
+      {errorMsg && <div className="alert alert-error"><AlertCircle size={16} />{errorMsg}</div>}
 
       {isFormOpen && (
-        <div className="card" style={{ borderLeft: '4px solid #10b981', marginBottom: '32px' }}>
-          <h3 style={{ fontSize: '1.125rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><Wallet size={20} color="#10b981" /> Add Manual Income Record</h3>
+        <div className="card" style={{ borderLeft: '3px solid var(--success)', marginBottom: '28px' }}>
+          <h3 style={{ fontSize: '1rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)', fontWeight: '700' }}><Wallet size={18} style={{ color: 'var(--success)' }} /> Add Manual Income Record</h3>
           <form className="standard-form" style={{ padding: 0 }} onSubmit={handleSave}>
             <div className="form-row">
               <div className="form-group">
@@ -111,8 +107,9 @@ const IncomeManagement = () => {
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
-              <button type="submit" className="btn-primary" disabled={isSubmitting} style={{ backgroundColor: '#10b981', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', gap: '10px' }}>
+              <button type="button" className="btn-secondary" onClick={() => setIsFormOpen(false)} disabled={isSubmitting}>Cancel</button>
+              <button type="submit" className="btn-primary" disabled={isSubmitting} style={{ background: 'var(--success)', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 {isSubmitting ? <Loader2 className="spin" size={18} /> : null} Save Income
               </button>
             </div>
@@ -147,14 +144,14 @@ const IncomeManagement = () => {
                 </tr>
               ) : incomes.map(inc => (
                 <tr key={inc.id}>
-                  <td>{inc.date}</td>
+                  <td className="nowrap">{inc.date}</td>
                   <td className="font-medium">
                     {inc.source}
-                    {inc.referenceType && <span style={{display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)'}}>{inc.referenceType} #{inc.referenceId}</span>}
+                    {inc.referenceType && <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{inc.referenceType} #{inc.referenceId}</span>}
                   </td>
-                  <td className="text-right font-medium" style={{ color: '#16a34a' }}>+₱{inc.amount?.toFixed(2)}</td>
-                  <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{inc.notes || "-"}</td>
-                  <td><span className="status-badge active" style={{ backgroundColor: '#dcfce7', color: '#166534' }}>Deposited</span></td>
+                  <td className="text-right font-semibold text-success">+₱{inc.amount?.toFixed(2)}</td>
+                  <td className="text-muted text-sm">{inc.notes || '–'}</td>
+                  <td><span className="badge badge-success">Deposited</span></td>
                 </tr>
               ))}
             </tbody>

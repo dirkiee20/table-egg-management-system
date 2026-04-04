@@ -70,15 +70,11 @@ const ExpenseManagement = () => {
         </div>
       </div>
 
-      {errorMsg && (
-        <div style={{ padding: '12px 16px', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '6px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500' }}>
-          <AlertCircle size={20} /> {errorMsg}
-        </div>
-      )}
+      {errorMsg && <div className="alert alert-error"><AlertCircle size={16} />{errorMsg}</div>}
 
       {isFormOpen && (
-        <div className="card" style={{ borderLeft: '4px solid #ef4444', marginBottom: '32px' }}>
-          <h3 style={{ fontSize: '1.125rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><Receipt size={20} color="#ef4444" /> New Operational Expense</h3>
+        <div className="card" style={{ borderLeft: '3px solid var(--danger)', marginBottom: '28px' }}>
+          <h3 style={{ fontSize: '1rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)', fontWeight: '700' }}><Receipt size={18} style={{ color: 'var(--danger)' }} /> New Operational Expense</h3>
           <form className="standard-form" style={{ padding: 0 }} onSubmit={handleSave}>
             <div className="form-row">
               <div className="form-group">
@@ -110,8 +106,9 @@ const ExpenseManagement = () => {
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
-              <button type="submit" className="btn-primary" disabled={isSubmitting} style={{ backgroundColor: '#dc2626', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', gap: '10px' }}>
+              <button type="button" className="btn-secondary" onClick={() => setIsFormOpen(false)} disabled={isSubmitting}>Cancel</button>
+              <button type="submit" className="btn-danger" disabled={isSubmitting} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--danger)', color: '#fff' }}>
                 {isSubmitting ? <Loader2 className="spin" size={18} /> : null} Save Expense
               </button>
             </div>
@@ -146,11 +143,11 @@ const ExpenseManagement = () => {
                 </tr>
               ) : expenses.map(ex => (
                 <tr key={ex.id}>
-                  <td>{ex.date}</td>
+                  <td className="nowrap">{ex.date}</td>
                   <td className="font-medium">{ex.category}</td>
-                  <td className="text-right font-medium" style={{ color: '#dc2626' }}>₱{ex.amount?.toFixed(2)}</td>
-                  <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{ex.notes || "-"}</td>
-                  <td><span className="status-badge active">Recorded</span></td>
+                  <td className="text-right font-semibold text-danger">₱{ex.amount?.toFixed(2)}</td>
+                  <td className="text-muted text-sm">{ex.notes || '–'}</td>
+                  <td><span className="badge badge-success">Recorded</span></td>
                 </tr>
               ))}
             </tbody>

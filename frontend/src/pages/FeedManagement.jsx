@@ -99,11 +99,7 @@ const FeedManagement = () => {
         <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Log daily feed intake per flock and view AI forecasts.</p>
       </div>
 
-      {errorMsg && (
-        <div style={{ padding: '12px 16px', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '6px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500' }}>
-          <AlertCircle size={20} /> {errorMsg}
-        </div>
-      )}
+      {errorMsg && <div className="alert alert-error"><AlertCircle size={16} />{errorMsg}</div>}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
         
@@ -114,9 +110,7 @@ const FeedManagement = () => {
           </h3>
 
           {submitStatus === 'success' && (
-            <div style={{ padding: '12px', backgroundColor: '#dcfce7', color: '#166534', borderRadius: '6px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem' }}>
-              <CheckCircle2 size={18} /> Record saved successfully!
-            </div>
+            <div className="alert alert-success"><CheckCircle2 size={16} /> Record saved successfully!</div>
           )}
 
           <form onSubmit={handleSubmit} className="standard-form" style={{ padding: 0 }}>
@@ -154,9 +148,9 @@ const FeedManagement = () => {
            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '16px' }}>Select a flock to view predictive 7-day feed consumption.</p>
 
            {!formData.flockId ? (
-              <div style={{ textAlign: 'center', padding: '40px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
-                 <p style={{ color: 'var(--text-muted)' }}>No flock selected.</p>
-              </div>
+               <div style={{ textAlign: 'center', padding: '40px', backgroundColor: 'var(--bg-surface-2)', borderRadius: '10px', border: '1.5px dashed var(--border-color)' }}>
+                  <p style={{ color: 'var(--text-muted)', fontSize:'0.875rem' }}>Select a flock above to load the AI forecast</p>
+               </div>
            ) : loadingForecast ? (
               <div style={{ textAlign: 'center', padding: '40px' }}>
                  <Loader2 className="spin" size={32} color="var(--primary)" style={{ margin: '0 auto' }} />
@@ -165,10 +159,8 @@ const FeedManagement = () => {
            ) : forecastData ? (
               <div>
                  {forecastData.method === 'historical_average' && (
-                    <div style={{ padding: '8px 12px', backgroundColor: '#fef3c7', color: '#92400e', borderRadius: '6px', fontSize: '0.8rem', marginBottom: '16px' }}>
-                       {forecastData.message}
-                    </div>
-                 )}
+                     <div className="alert alert-warning" style={{ fontSize: '0.8rem', marginBottom: '12px' }}>{forecastData.message}</div>
+                  )}
                  <div style={{ height: '240px', width: '100%' }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <RechartsLine data={getChartData()} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
@@ -182,11 +174,11 @@ const FeedManagement = () => {
                     </ResponsiveContainer>
                  </div>
               </div>
-           ) : (
-              <div style={{ textAlign: 'center', padding: '40px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
-                 <p style={{ color: '#ef4444' }}>Unable to load forecast.</p>
-              </div>
-           )}
+            ) : (
+               <div style={{ textAlign: 'center', padding: '40px', backgroundColor: 'var(--bg-surface-2)', borderRadius: '10px', border: '1.5px dashed var(--border-color)' }}>
+                  <p style={{ color: 'var(--danger)', fontSize: '0.875rem' }}>Unable to load forecast. Add more feed records to enable predictions.</p>
+               </div>
+            )}
         </div>
       </div>
 

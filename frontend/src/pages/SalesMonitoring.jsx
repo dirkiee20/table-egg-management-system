@@ -1,212 +1,179 @@
 import React, { useState, useEffect } from 'react';
-import { Download, TrendingUp, TrendingDown, CircleDollarSign, Users, Package, Loader2, AlertCircle } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { Download, TrendingUp, TrendingDown, CircleDollarSign, Users, Package, Loader2, AlertCircle, BarChart3 } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Area, AreaChart } from 'recharts';
 import { api } from '../services/api';
 import '../App.css';
 
-const SalesMonitoring = () => {
-  const [sales, setSales] = useState([]);
-  const [expenses, setExpenses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState(null);
-  const [filter, setFilter] = useState('Last 7 Days');
+const ChartTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '10px 14px', boxShadow: 'var(--shadow-lg)', fontSize: '0.8125rem' }}>
+      <p style={{ fontWeight: '700', marginBottom: '8px', color: 'var(--text-main)' }}>{label}</p>
+      {payload.map((p, i) => (
+        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: p.color, display: 'inline-block', flexShrink: 0 }} />
+          <span style={{ color: 'var(--text-muted)' }}>{p.name}:</span>
+          <span style={{ fontWeight: '600', color: 'var(--text-main)' }}>₱{Number(p.value).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
 
-  useEffect(() => {
-    loadData();
-  }, []);
+const SalesMonitoring = () => {
+  const [sales, setSales]       = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [errorMsg, setErrorMsg] = useState(null);
+  const [filter, setFilter]     = useState('Last 7 Days');
+
+  useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const [salesData, expensesData] = await Promise.all([
-        api.sales.getAll(),
-        api.expenses.getAll()
-      ]);
-      setSales(salesData);
-      setExpenses(expensesData);
+      const [sd, ed] = await Promise.all([api.sales.getAll(), api.expenses.getAll()]);
+      setSales(sd);
+      setExpenses(ed);
     } catch (err) {
-      setErrorMsg("Failed to retrieve monitoring data.");
+      setErrorMsg('Failed to retrieve monitoring data.');
     } finally {
       setLoading(false);
     }
   };
 
-  const padZero = (n) => n < 10 ? '0' + n : n;
-  
+  const pad = n => n < 10 ? '0' + n : n;
+
   const getFilteredDates = () => {
     const now = new Date();
     if (filter === 'Last 7 Days') {
-      const dates = [];
-      for(let i=6; i>=0; i--) {
-        let d = new Date();
-        d.setDate(now.getDate() - i);
-        dates.push(d);
-      }
-      return dates;
-    } else if (filter === 'This Month') {
-      const dates = [];
-      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-      for(let i=1; i<=daysInMonth; i++) {
-        dates.push(new Date(now.getFullYear(), now.getMonth(), i));
-      }
-      return dates;
-    } else if (filter === 'Last Month') {
-      const dates = [];
-      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const daysInMonth = new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 0).getDate();
-      for(let i=1; i<=daysInMonth; i++) {
-        dates.push(new Date(lastMonth.getFullYear(), lastMonth.getMonth(), i));
-      }
-      return dates;
+      return Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(now.getDate() - (6 - i)); return d; });
+    }
+    if (filter === 'This Month') {
+      const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      return Array.from({ length: days }, (_, i) => new Date(now.getFullYear(), now.getMonth(), i + 1));
+    }
+    if (filter === 'Last Month') {
+      const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const days = new Date(lm.getFullYear(), lm.getMonth() + 1, 0).getDate();
+      return Array.from({ length: days }, (_, i) => new Date(lm.getFullYear(), lm.getMonth(), i + 1));
     }
     return [];
   };
 
   const buildChartData = () => {
-     let chartMap = {};
-     const dates = getFilteredDates();
-     dates.forEach(d => {
-       const dateStr = `${d.getFullYear()}-${padZero(d.getMonth()+1)}-${padZero(d.getDate())}`;
-       let formatName = d.toLocaleDateString('en-US', { weekday: 'short' });
-       if (filter !== 'Last 7 Days') {
-         formatName = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-       }
-       chartMap[dateStr] = { name: formatName, dateStr: dateStr, sales: 0, expenses: 0 };
-     });
-     
-     sales.forEach(s => {
-       if (chartMap[s.date]) {
-         chartMap[s.date].sales += Number(s.total) || 0;
-       }
-     });
-
-     expenses.forEach(e => {
-       if (chartMap[e.date]) {
-         chartMap[e.date].expenses += Number(e.amount) || 0;
-       }
-     });
-     
-     return Object.values(chartMap);
+    const dates = getFilteredDates();
+    const map = {};
+    dates.forEach(d => {
+      const ds = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+      const label = filter === 'Last 7 Days'
+        ? d.toLocaleDateString('en-US', { weekday: 'short' })
+        : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      map[ds] = { name: label, dateStr: ds, sales: 0, expenses: 0 };
+    });
+    sales.forEach(s    => { if (map[s.date]) map[s.date].sales    += Number(s.total)  || 0; });
+    expenses.forEach(e => { if (map[e.date]) map[e.date].expenses += Number(e.amount) || 0; });
+    return Object.values(map);
   };
 
   const CHART_DATA = buildChartData();
 
-  // Filter raw data for summary cards based on selected filter
-  const getFilteredSales = () => {
-     const chartMap = {};
-     getFilteredDates().forEach(d => {
-        const dateStr = `${d.getFullYear()}-${padZero(d.getMonth()+1)}-${padZero(d.getDate())}`;
-        chartMap[dateStr] = true;
-     });
-     return sales.filter(s => chartMap[s.date]);
-  };
-  const getFilteredExpenses = () => {
-     const chartMap = {};
-     getFilteredDates().forEach(d => {
-        const dateStr = `${d.getFullYear()}-${padZero(d.getMonth()+1)}-${padZero(d.getDate())}`;
-        chartMap[dateStr] = true;
-     });
-     return expenses.filter(e => chartMap[e.date]);
+  const dateSet = () => {
+    const m = {};
+    getFilteredDates().forEach(d => { m[`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`] = true; });
+    return m;
   };
 
-  const activeSales = getFilteredSales();
-  const activeExpenses = getFilteredExpenses();
+  const ds = dateSet();
+  const activeSales    = sales.filter(s => ds[s.date]);
+  const activeExpenses = expenses.filter(e => ds[e.date]);
 
-  const totalRevenue = activeSales.reduce((sum, s) => sum + Number(s.total), 0);
-  const totalExpenseNum = activeExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
-  const totalTrays = activeSales.reduce((sum, s) => sum + Number(s.traysSold), 0);
-  const totalOrders = activeSales.length;
-  const uniqueCustomers = new Set(activeSales.map(s => s.customer?.toLowerCase().trim())).size;
-  const avgOrderValue = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
+  const totalRevenue     = activeSales.reduce((s, r) => s + Number(r.total), 0);
+  const totalExpenseNum  = activeExpenses.reduce((s, r) => s + Number(r.amount), 0);
+  const netProfit        = totalRevenue - totalExpenseNum;
+  const totalOrders      = activeSales.length;
+  const uniqueCustomers  = new Set(activeSales.map(s => (s.customer_name || s.customer)?.toLowerCase().trim())).size;
+  const avgOrderValue    = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
 
-  if (loading) {
-    return (
-      <div className="page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-        <Loader2 className="spin" size={48} color="var(--primary)" />
-      </div>
-    );
-  }
+  if (loading) return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+      <Loader2 className="spin" size={40} style={{ color: 'var(--primary)' }} />
+    </div>
+  );
 
   return (
     <div className="page-container">
       <div className="page-header">
-        <h2>Sales and Expense Monitoring</h2>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <select 
-            className="btn-secondary" 
-            style={{ backgroundColor: 'white' }}
+        <h2>Sales &amp; Expense Monitoring</h2>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <select
             value={filter}
             onChange={e => setFilter(e.target.value)}
+            style={{
+              padding: '8px 32px 8px 12px',
+              border: '1.5px solid var(--border-color)',
+              borderRadius: '8px',
+              fontSize: '0.875rem',
+              color: 'var(--text-main)',
+              background: 'var(--bg-surface)',
+              cursor: 'pointer',
+              outline: 'none',
+              appearance: 'none',
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 10px center'
+            }}
           >
             <option>Last 7 Days</option>
             <option>This Month</option>
             <option>Last Month</option>
           </select>
-          <button className="btn-secondary"><Download size={18} /> Export</button>
+          <button className="btn-secondary"><Download size={16} /> Export</button>
         </div>
       </div>
 
-      {errorMsg && (
-        <div style={{ padding: '12px 16px', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '6px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500' }}>
-          <AlertCircle size={20} /> {errorMsg}
-        </div>
-      )}
+      {errorMsg && <div className="alert alert-error"><AlertCircle size={16} />{errorMsg}</div>}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '32px' }}>
-        <div className="card" style={{ padding: '24px', marginBottom: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      {/* Stat cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+        {[
+          { label: 'Total Revenue',   value: `₱${totalRevenue.toLocaleString('en-PH', {minimumFractionDigits:2})}`, icon: TrendingUp,        bg: 'var(--success-bg)',  color: 'var(--success)' },
+          { label: 'Total Expenses',  value: `₱${totalExpenseNum.toLocaleString('en-PH', {minimumFractionDigits:2})}`, icon: TrendingDown, bg: 'var(--danger-bg)',   color: 'var(--danger)' },
+          { label: 'Net Profit',      value: `₱${netProfit.toLocaleString('en-PH', {minimumFractionDigits:2})}`,      icon: CircleDollarSign, bg: netProfit >= 0 ? 'var(--success-bg)' : 'var(--danger-bg)', color: netProfit >= 0 ? 'var(--success)' : 'var(--danger)' },
+          { label: 'Avg. Order',      value: `₱${avgOrderValue.toLocaleString('en-PH', {minimumFractionDigits:2})}`,  icon: Package,          bg: 'var(--warning-bg)', color: 'var(--warning)' },
+          { label: 'Unique Customers',value: uniqueCustomers, icon: Users, bg: 'var(--info-bg)', color: 'var(--info)' },
+        ].map(({ label, value, icon: Icon, bg, color }) => (
+          <div key={label} className="stat-card" style={{ marginBottom: 0 }}>
             <div>
-              <h4 style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: '500', marginBottom: '4px' }}>Total Revenue</h4>
-              <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-main)' }}>₱{totalRevenue.toFixed(2)}</div>
+              <div className="stat-card__label">{label}</div>
+              <div className="stat-card__value" style={{ fontSize: '1.375rem', color }}>{value}</div>
             </div>
-            <div style={{ padding: '8px', backgroundColor: '#dcfce7', borderRadius: '8px', color: '#16a34a' }}><TrendingUp size={24} /></div>
+            <div className="stat-card__icon" style={{ background: bg, color }}><Icon size={20} /></div>
           </div>
-        </div>
-
-        <div className="card" style={{ padding: '24px', marginBottom: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <h4 style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: '500', marginBottom: '4px' }}>Total Expenses</h4>
-              <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#dc2626' }}>₱{totalExpenseNum.toFixed(2)}</div>
-            </div>
-            <div style={{ padding: '8px', backgroundColor: '#fee2e2', borderRadius: '8px', color: '#dc2626' }}><TrendingDown size={24} /></div>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: '24px', marginBottom: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <h4 style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: '500', marginBottom: '4px' }}>Avg. Order Value</h4>
-              <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-main)' }}>₱{avgOrderValue.toFixed(2)}</div>
-            </div>
-            <div style={{ padding: '8px', backgroundColor: '#fef3c7', borderRadius: '8px', color: '#d97706' }}><CircleDollarSign size={24} /></div>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: '24px', marginBottom: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <h4 style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: '500', marginBottom: '4px' }}>Active Customers</h4>
-              <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-main)' }}>{uniqueCustomers}</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Unique Logged</div>
-            </div>
-            <div style={{ padding: '8px', backgroundColor: '#f3f4f6', borderRadius: '8px', color: '#4b5563' }}><Users size={24} /></div>
-          </div>
-        </div>
+        ))}
       </div>
 
+      {/* Chart */}
       <div className="card">
-        <h3 style={{ fontSize: '1.125rem', color: 'var(--text-main)', marginBottom: '24px' }}>Sales vs Expenses Trend ({filter})</h3>
-        <div style={{ width: '100%', height: '350px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
+          <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--info-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--info)' }}>
+            <BarChart3 size={18} />
+          </div>
+          <div>
+            <div style={{ fontWeight: '700', fontSize: '0.9375rem', color: 'var(--text-main)' }}>Sales vs Expenses Trend</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{filter}</div>
+          </div>
+        </div>
+        <div style={{ height: '340px' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={CHART_DATA} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} />
-              <YAxis orientation="left" stroke="#3b82f6" axisLine={false} tickLine={false} tickFormatter={(value) => `₱${value}`} />
-              <Tooltip cursor={{fill: 'transparent'}} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-              <Legend verticalAlign="top" height={36}/>
-              <Line type="monotone" dataKey="sales" name="Sales (₱)" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-              <Line type="monotone" dataKey="expenses" name="Expenses (₱)" stroke="#dc2626" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+            <LineChart data={CHART_DATA} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 12 }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: 12 }} tickFormatter={v => `₱${v}`} />
+              <Tooltip content={<ChartTooltip />} />
+              <Legend wrapperStyle={{ fontSize: '0.8125rem', paddingTop: '16px' }} />
+              <Line type="monotone" dataKey="sales"    name="Sales (₱)"    stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 4, fill: '#3b82f6' }} activeDot={{ r: 7 }} />
+              <Line type="monotone" dataKey="expenses" name="Expenses (₱)" stroke="#ef4444" strokeWidth={2.5} dot={{ r: 4, fill: '#ef4444' }} activeDot={{ r: 7 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>

@@ -74,33 +74,40 @@ const EggInventory = () => {
         </button>
       </div>
 
-      {error && (
-        <div style={{ padding: '16px', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '8px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <AlertCircle size={20} /> {error}
-        </div>
-      )}
+      {error && <div className="alert alert-error"><AlertCircle size={16} />{error}</div>}
 
       {/* Summary Cards Section */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '32px' }}>
         
         {/* Total Sellable Card */}
-        <div className="card" style={{ backgroundColor: 'var(--bg-sidebar)', color: 'white', marginBottom: 0 }}>
-          <h4 style={{ color: 'var(--text-sidebar)', fontSize: '0.875rem', fontWeight: '500', marginBottom: '8px' }}>Total Sellable Stock</h4>
-          <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--primary)' }}>
-            {loading ? <Loader2 className="spin" size={28} /> : inventory.totalSellable.toLocaleString()} <span style={{ fontSize: '1rem', color: 'var(--text-sidebar)' }}>Pieces</span>
+        <div className="stat-card" style={{ marginBottom: 0, borderLeft: '3px solid var(--primary)' }}>
+          <div>
+            <div className="stat-card__label">Total Sellable Stock</div>
+            <div className="stat-card__value" style={{ color: 'var(--primary)' }}>
+              {loading ? <Loader2 className="spin" size={24} /> : (inventory.totalSellable || 0).toLocaleString()}
+              <span style={{ fontSize: '1rem', fontWeight: '400', color: 'var(--text-muted)', marginLeft: '6px' }}>pieces</span>
+            </div>
+            <div className="stat-card__sub">
+              L: {inventory.large?.toLocaleString() || 0} &nbsp;|&nbsp; M: {inventory.medium?.toLocaleString() || 0} &nbsp;|&nbsp; S: {inventory.small?.toLocaleString() || 0}
+            </div>
           </div>
-          <div style={{ color: 'var(--text-sidebar)', fontSize: '1rem', marginTop: '8px' }}>
-            L: {inventory.large?.toLocaleString() || 0}, M: {inventory.medium?.toLocaleString() || 0}, S: {inventory.small?.toLocaleString() || 0}
+          <div className="stat-card__icon" style={{ background: 'var(--primary-light)', color: 'var(--warning)' }}>
+            <Package size={22} />
           </div>
         </div>
 
         {/* Damage Card */}
-        <div className="card" style={{ marginBottom: 0, padding: '20px', borderLeft: '4px solid #ef4444' }}>
-          <h4 style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: '500', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <AlertTriangle size={14} color="#ef4444" /> Target Rejects / Cracked
-          </h4>
-          <div style={{ fontSize: '1.75rem', fontWeight: '600', color: 'var(--text-main)' }}>
-            {loading ? <Loader2 className="spin" size={24} /> : inventory.totalDamaged.toLocaleString()} <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>Pieces</span>
+        <div className="stat-card" style={{ marginBottom: 0, borderLeft: '3px solid var(--danger)' }}>
+          <div>
+            <div className="stat-card__label">Rejected / Cracked</div>
+            <div className="stat-card__value" style={{ color: 'var(--danger)' }}>
+              {loading ? <Loader2 className="spin" size={24} /> : (inventory.totalDamaged || 0).toLocaleString()}
+              <span style={{ fontSize: '1rem', fontWeight: '400', color: 'var(--text-muted)', marginLeft: '6px' }}>pieces</span>
+            </div>
+            <div className="stat-card__sub"><AlertTriangle size={12} /> Unsellable stock</div>
+          </div>
+          <div className="stat-card__icon" style={{ background: 'var(--danger-bg)', color: 'var(--danger)' }}>
+            <AlertTriangle size={22} />
           </div>
         </div>
       </div>
