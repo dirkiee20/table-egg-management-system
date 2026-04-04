@@ -101,7 +101,7 @@ const ExpenseManagement = () => {
             
             <div className="form-row">
               <div className="form-group">
-                <label>Total Amount ($)</label>
+                <label>Total Amount (₱)</label>
                 <input type="number" step="0.01" min="0.01" placeholder="0.00" required value={amount} onChange={e => setAmount(e.target.value)} disabled={isSubmitting} />
               </div>
               <div className="form-group">
@@ -126,7 +126,7 @@ const ExpenseManagement = () => {
               <tr>
                 <th>Date</th>
                 <th>Category</th>
-                <th className="text-right">Amount ($)</th>
+                <th className="text-right">Amount (₱)</th>
                 <th>Description</th>
                 <th>Status</th>
               </tr>
@@ -148,7 +148,7 @@ const ExpenseManagement = () => {
                 <tr key={ex.id}>
                   <td>{ex.date}</td>
                   <td className="font-medium">{ex.category}</td>
-                  <td className="text-right font-medium" style={{ color: '#dc2626' }}>${ex.amount?.toFixed(2)}</td>
+                  <td className="text-right font-medium" style={{ color: '#dc2626' }}>₱{ex.amount?.toFixed(2)}</td>
                   <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{ex.notes || "-"}</td>
                   <td><span className="status-badge active">Recorded</span></td>
                 </tr>

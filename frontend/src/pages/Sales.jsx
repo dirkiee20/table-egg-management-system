@@ -11,11 +11,13 @@ const Sales = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Point of Sale Form State
-  const [customer, setCustomer] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [contactNo, setContactNo] = useState('');
+  const [address, setAddress] = useState('');
   const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0]);
   const [isPaid, setIsPaid] = useState(true);
   const [lineItems, setLineItems] = useState([
-    { id: 1, grade: 'Large', quantity: 10, price: 4.50 }
+    { id: 1, grade: 'Large', quantity: 10, price: 150.00 } // price changed to PHP mock default
   ]);
 
   useEffect(() => {
@@ -36,7 +38,7 @@ const Sales = () => {
   };
 
   const addLineItem = () => {
-    setLineItems([...lineItems, { id: Date.now(), grade: 'Medium', quantity: 1, price: 4.00 }]);
+    setLineItems([...lineItems, { id: Date.now(), grade: 'Medium', quantity: 1, price: 140.00 }]);
   };
 
   const removeLineItem = (id) => {
@@ -70,7 +72,9 @@ const Sales = () => {
       const avgPrice = totalQty > 0 ? (totalAmt / totalQty) : 0;
 
       await api.sales.create({
-        customer: customer || 'Walk-in Customer',
+        customer_name: customerName || 'Walk-in Customer',
+        contact_no: contactNo,
+        address: address,
         date: saleDate,
         traysSold: totalQty,
         pricePerTray: Number(avgPrice.toFixed(2)),
@@ -83,8 +87,10 @@ const Sales = () => {
       setIsModalOpen(false);
       
       // Reset form
-      setCustomer('');
-      setLineItems([{ id: Date.now(), grade: 'Large', quantity: 10, price: 4.50 }]);
+      setCustomerName('');
+      setContactNo('');
+      setAddress('');
+      setLineItems([{ id: Date.now(), grade: 'Large', quantity: 10, price: 150.00 }]);
     } catch (err) {
       console.error("Sale failed:", err);
       // Surface backend validation errors (like insufficient inventory)
@@ -119,7 +125,7 @@ const Sales = () => {
                 <th>Date</th>
                 <th>Customer</th>
                 <th className="text-right">Quantity</th>
-                <th className="text-right">Total ($)</th>
+                <th className="text-right">Total (₱)</th>
                 <th>Payment Status</th>
                 <th className="text-right">Actions</th>
               </tr>
@@ -141,9 +147,9 @@ const Sales = () => {
                 <tr key={sale.id}>
                   <td className="font-medium text-muted">INV-{sale.id}</td>
                   <td>{sale.date}</td>
-                  <td className="font-medium">{sale.customer}</td>
+                  <td className="font-medium">{sale.customer_name || sale.customer}</td>
                   <td className="text-right">{sale.traysSold} Trays</td>
-                  <td className="text-right font-medium">${sale.total?.toFixed(2)}</td>
+                  <td className="text-right font-medium">₱{sale.total?.toFixed(2)}</td>
                   <td>
                     {sale.status === 'Paid' ? (
                       <span className="status-badge active"><CheckCircle2 size={12} style={{marginRight: 4}}/> Paid</span>
@@ -181,11 +187,22 @@ const Sales = () => {
               <div className="form-row">
                 <div className="form-group">
                   <label>Customer Name</label>
-                  <input type="text" placeholder="Walk-in Customer" value={customer} onChange={e => setCustomer(e.target.value)} disabled={isSubmitting} />
+                  <input type="text" placeholder="Walk-in Customer" value={customerName} onChange={e => setCustomerName(e.target.value)} disabled={isSubmitting} />
                 </div>
                 <div className="form-group">
                   <label>Sale Date</label>
                   <input type="date" required value={saleDate} onChange={e => setSaleDate(e.target.value)} disabled={isSubmitting} />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Contact Number</label>
+                  <input type="text" placeholder="e.g. 09123456789" value={contactNo} onChange={e => setContactNo(e.target.value)} disabled={isSubmitting} />
+                </div>
+                <div className="form-group">
+                  <label>Address</label>
+                  <input type="text" placeholder="Customer address" value={address} onChange={e => setAddress(e.target.value)} disabled={isSubmitting} />
                 </div>
               </div>
 
@@ -195,12 +212,11 @@ const Sales = () => {
                 {lineItems.map((item, index) => (
                   <div key={item.id} style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', marginBottom: index !== lineItems.length - 1 ? '12px' : '0' }}>
                     <div className="form-group" style={{ flex: 2, marginBottom: 0 }}>
-                      <label style={{ fontSize: '0.75rem' }}>Select Grade</label>
+                      <label style={{ fontSize: '0.75rem' }}>Select Size</label>
                       <select value={item.grade} onChange={e => updateLineItem(item.id, 'grade', e.target.value)} disabled={isSubmitting}>
-                        <option value="Jumbo">Jumbo Eggs</option>
-                        <option value="Large">Large Eggs</option>
-                        <option value="Medium">Medium Eggs</option>
-                        <option value="Small">Small / Peewee</option>
+                        <option value="Large">Large</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Small">Small</option>
                       </select>
                     </div>
                     
@@ -210,12 +226,12 @@ const Sales = () => {
                     </div>
                     
                     <div className="form-group" style={{ flex: 1.2, marginBottom: 0 }}>
-                      <label style={{ fontSize: '0.75rem' }}>Price/Tray ($)</label>
+                      <label style={{ fontSize: '0.75rem' }}>Price/Tray (₱)</label>
                       <input type="number" step="0.01" min="0" required value={item.price} onChange={e => updateLineItem(item.id, 'price', e.target.value)} disabled={isSubmitting} />
                     </div>
 
                     <div style={{ flex: 1, textAlign: 'right', fontWeight: '500', paddingBottom: '10px' }}>
-                      ${(item.quantity * item.price).toFixed(2)}
+                      ₱{(item.quantity * item.price).toFixed(2)}
                     </div>
                     
                     <button type="button" className="action-btn delete" onClick={() => removeLineItem(item.id)} disabled={isSubmitting} style={{ paddingBottom: '10px', opacity: isSubmitting ? 0.5 : 1 }}>
@@ -225,7 +241,7 @@ const Sales = () => {
                 ))}
                 
                 <button type="button" onClick={addLineItem} className="btn-secondary" disabled={isSubmitting} style={{ marginTop: '16px', fontSize: '0.75rem', padding: '6px 12px' }}>
-                  <PlusCircle size={14} /> Add Another Grade
+                  <PlusCircle size={14} /> Add Another Size
                 </button>
               </div>
 
@@ -238,7 +254,7 @@ const Sales = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Amount</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-main)' }}>${calculateTotal().toFixed(2)}</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-main)' }}>₱{calculateTotal().toFixed(2)}</div>
                   </div>
                   <button type="submit" className="btn-primary" disabled={isSubmitting} style={{ padding: '12px 24px', fontSize: '1rem' }}>
                     {isSubmitting ? <Loader2 className="spin" size={20} /> : <CheckCircle2 size={20} />} 

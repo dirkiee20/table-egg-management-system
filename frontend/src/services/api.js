@@ -53,6 +53,11 @@ export const api = {
     getAll: () => apiClient('/flocks'),
     create: (data) => apiClient('/flocks', { method: 'POST', body: JSON.stringify(data) })
   },
+  feed: {
+    getAll: () => apiClient('/feed'),
+    create: (data) => apiClient('/feed', { method: 'POST', body: JSON.stringify(data) }),
+    getForecast: (flockId) => apiClient(`/forecast/feed/${flockId}`)
+  },
   production: {
     getAll: () => apiClient('/production'),
     create: (data) => apiClient('/production', { method: 'POST', body: JSON.stringify(data) })
@@ -74,7 +79,8 @@ export const api = {
   },
   calendar: {
     getAll: () => apiClient('/calendar'),
-    create: (data) => apiClient('/calendar', { method: 'POST', body: JSON.stringify(data) })
+    create: (data) => apiClient('/calendar', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id, data) => apiClient(`/calendar/${id}`, { method: 'PUT', body: JSON.stringify(data) })
   },
   vaccinations: {
     getAll: () => apiClient('/vaccinations'),

@@ -102,7 +102,7 @@ const IncomeManagement = () => {
             
             <div className="form-row">
               <div className="form-group">
-                <label>Total Amount ($)</label>
+                <label>Total Amount (₱)</label>
                 <input type="number" step="0.01" min="0.01" placeholder="0.00" required value={amount} onChange={e => setAmount(e.target.value)} disabled={isSubmitting} />
               </div>
               <div className="form-group">
@@ -127,7 +127,7 @@ const IncomeManagement = () => {
               <tr>
                 <th>Date</th>
                 <th>Source Category</th>
-                <th className="text-right">Amount ($)</th>
+                <th className="text-right">Amount (₱)</th>
                 <th>Description</th>
                 <th>Status</th>
               </tr>
@@ -152,7 +152,7 @@ const IncomeManagement = () => {
                     {inc.source}
                     {inc.referenceType && <span style={{display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)'}}>{inc.referenceType} #{inc.referenceId}</span>}
                   </td>
-                  <td className="text-right font-medium" style={{ color: '#16a34a' }}>+${inc.amount?.toFixed(2)}</td>
+                  <td className="text-right font-medium" style={{ color: '#16a34a' }}>+₱{inc.amount?.toFixed(2)}</td>
                   <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{inc.notes || "-"}</td>
                   <td><span className="status-badge active" style={{ backgroundColor: '#dcfce7', color: '#166534' }}>Deposited</span></td>
                 </tr>

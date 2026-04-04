@@ -56,21 +56,24 @@ const EggProductionRecords = () => {
               <tr>
                 <th>Date</th>
                 <th>Flock Reference ID</th>
+                <th className="text-right">Large (L)</th>
+                <th className="text-right">Medium (M)</th>
+                <th className="text-right">Small (S)</th>
                 <th className="text-right">Total Good Eggs</th>
-                <th className="text-right">Damaged/Rejected</th>
+                <th className="text-right">Cracked/Reject</th>
                 <th>Remarks</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '32px' }}>
+                  <td colSpan="8" style={{ textAlign: 'center', padding: '32px' }}>
                     <Loader2 className="spin" size={24} style={{ margin: '0 auto', color: 'var(--primary)' }} />
                   </td>
                 </tr>
               ) : records.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
+                  <td colSpan="8" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
                     No egg production records found.
                   </td>
                 </tr>
@@ -78,8 +81,11 @@ const EggProductionRecords = () => {
                 <tr key={row.id}>
                   <td><div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><CalIcon size={14} color="var(--text-muted)"/>{row.date}</div></td>
                   <td className="font-medium">Flock #{row.flockId}</td>
-                  <td className="text-right font-medium" style={{ color: '#16a34a' }}>{(row.eggsCollected || 0).toLocaleString()}</td>
-                  <td className="text-right">{(row.damagedEggs || 0).toLocaleString()}</td>
+                  <td className="text-right">{(row.large || 0).toLocaleString()}</td>
+                  <td className="text-right">{(row.medium || 0).toLocaleString()}</td>
+                  <td className="text-right">{(row.small || 0).toLocaleString()}</td>
+                  <td className="text-right font-medium" style={{ color: '#16a34a' }}>{(row.totalGoodEggs || row.eggsCollected || 0).toLocaleString()}</td>
+                  <td className="text-right">{(row.cracked || 0) + (row.reject || 0) > 0 ? (row.cracked || 0) + (row.reject || 0) : (row.damagedEggs || 0)}</td>
                   <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{row.notes || '-'}</td>
                 </tr>
               ))}

@@ -25,8 +25,14 @@ class Production(Base):
     id = Column(Integer, primary_key=True, index=True)
     date = Column(String)
     flockId = Column(String)
-    eggsCollected = Column(Integer)
-    damagedEggs = Column(Integer)
+    eggsCollected = Column(Integer) # Legacy or total
+    large = Column(Integer, default=0)
+    medium = Column(Integer, default=0)
+    small = Column(Integer, default=0)
+    cracked = Column(Integer, default=0)
+    reject = Column(Integer, default=0)
+    totalGoodEggs = Column(Integer, default=0)
+    damagedEggs = Column(Integer) # Legacy
     mortality = Column(Integer)
     notes = Column(String, nullable=True)
     createdAt = Column(DateTime, default=datetime.utcnow)
@@ -36,11 +42,17 @@ class Inventory(Base):
     id = Column(Integer, primary_key=True, index=True)
     totalSellable = Column(Integer, default=0)
     totalDamaged = Column(Integer, default=0)
+    large = Column(Integer, default=0)
+    medium = Column(Integer, default=0)
+    small = Column(Integer, default=0)
 
 class Sale(Base):
     __tablename__ = "sales"
     id = Column(Integer, primary_key=True, index=True)
-    customer = Column(String)
+    customer = Column(String) # Legacy
+    customer_name = Column(String, nullable=True)
+    contact_no = Column(String, nullable=True)
+    address = Column(String, nullable=True)
     date = Column(String)
     traysSold = Column(Integer)
     pricePerTray = Column(Float)
@@ -75,6 +87,9 @@ class CalendarEvent(Base):
     title = Column(String)
     date = Column(String)
     type = Column(String)
+    time = Column(String, nullable=True)
+    description = Column(String, nullable=True)
+    status = Column(String, nullable=True, default="Pending")
 
 class Vaccination(Base):
     __tablename__ = "vaccinations"
@@ -104,3 +119,11 @@ class Staff(Base):
     contactNumber = Column(String)
     email = Column(String, nullable=True)
     status = Column(String, default="Active")
+
+class FeedConsumption(Base):
+    __tablename__ = "feed_consumption"
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(String)
+    flockId = Column(String)
+    feedConsumedKgs = Column(Float)
+    createdAt = Column(DateTime, default=datetime.utcnow)

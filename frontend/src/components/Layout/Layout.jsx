@@ -21,11 +21,12 @@ const Layout = ({ children }) => {
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Calendar', path: '/calendar', icon: CalendarDays },
     { name: 'Flock Management', path: '/flocks', icon: Bird },
+    { name: 'Feed Management', path: '/feed', icon: ClipboardList },
     { name: 'Daily Production', path: '/production', icon: ClipboardList },
     { name: 'Egg Production Records', path: '/production-records', icon: FileClock },
     { name: 'Egg Inventory', path: '/inventory', icon: Egg },
     { name: 'Sales', path: '/sales', icon: ShoppingCart },
-    { name: 'Sales Monitoring', path: '/sales-monitoring', icon: CircleDollarSign },
+    { name: 'Sales & Expense Monitoring', path: '/sales-monitoring', icon: CircleDollarSign },
     { name: 'Vaccination Records', path: '/vaccinations', icon: Syringe },
     { name: 'Hatchery Records', path: '/hatchery', icon: Building2 },
     { name: 'Staff Management', path: '/staff', icon: Users },
@@ -40,7 +41,7 @@ const Layout = ({ children }) => {
   } else if (user?.role === ROLES.STAFF) {
     allowedNames = [
       'Dashboard', 'Calendar', 'Daily Production', 'Egg Production Records', 
-      'Egg Inventory', 'Vaccination Records', 'Hatchery Records'
+      'Egg Inventory', 'Vaccination Records', 'Hatchery Records', 'Feed Management'
     ]; // Staff restricted view
   }
 

@@ -40,8 +40,14 @@ class FlockResponse(FlockBase):
 class ProductionBase(BaseModel):
     date: str
     flockId: str
-    eggsCollected: int
-    damagedEggs: int
+    eggsCollected: Optional[int] = 0
+    large: Optional[int] = 0
+    medium: Optional[int] = 0
+    small: Optional[int] = 0
+    cracked: Optional[int] = 0
+    reject: Optional[int] = 0
+    totalGoodEggs: Optional[int] = 0
+    damagedEggs: Optional[int] = 0
     mortality: int
     notes: Optional[str] = None
 
@@ -55,11 +61,17 @@ class InventoryResponse(BaseModel):
     id: int
     totalSellable: int
     totalDamaged: int
+    large: int = 0
+    medium: int = 0
+    small: int = 0
     class Config: from_attributes = True
 
 # Sales
 class SaleBase(BaseModel):
-    customer: str
+    customer: Optional[str] = None
+    customer_name: Optional[str] = None
+    contact_no: Optional[str] = None
+    address: Optional[str] = None
     date: str
     traysSold: int
     pricePerTray: float
@@ -105,6 +117,9 @@ class CalendarEventBase(BaseModel):
     title: str
     date: str
     type: str
+    time: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[str] = "Pending"
 
 class CalendarEventCreate(CalendarEventBase): pass
 class CalendarEventResponse(CalendarEventBase):
@@ -150,4 +165,17 @@ class StaffBase(BaseModel):
 class StaffCreate(StaffBase): pass
 class StaffResponse(StaffBase):
     id: int
+    status: str
+    class Config: from_attributes = True
+
+# Feed Consumption
+class FeedConsumptionBase(BaseModel):
+    date: str
+    flockId: str
+    feedConsumedKgs: float
+
+class FeedConsumptionCreate(FeedConsumptionBase): pass
+class FeedConsumptionResponse(FeedConsumptionBase):
+    id: int
+    createdAt: datetime
     class Config: from_attributes = True

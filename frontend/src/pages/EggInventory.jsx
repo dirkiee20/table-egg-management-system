@@ -33,7 +33,9 @@ const EggInventory = () => {
           id: `prod-${p.id}`,
           date: p.date,
           type: 'IN',
-          grade: 'Mixed', // Simplified for MVP backend schema
+          large: p.large || 0,
+          medium: p.medium || 0,
+          small: p.small || 0,
           quantity: p.eggsCollected,
           unit: 'Eggs',
           reference: `Daily Prod (Flock ${p.flockId})`
@@ -42,7 +44,9 @@ const EggInventory = () => {
           id: `sale-${s.id}`,
           date: s.date,
           type: 'OUT',
-          grade: 'Mixed',
+          large: '-',
+          medium: '-',
+          small: '-',
           quantity: s.traysSold,
           unit: 'Trays',
           reference: `Sale (${s.customer})`
@@ -85,6 +89,9 @@ const EggInventory = () => {
           <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--primary)' }}>
             {loading ? <Loader2 className="spin" size={28} /> : inventory.totalSellable.toLocaleString()} <span style={{ fontSize: '1rem', color: 'var(--text-sidebar)' }}>Pieces</span>
           </div>
+          <div style={{ color: 'var(--text-sidebar)', fontSize: '1rem', marginTop: '8px' }}>
+            L: {inventory.large?.toLocaleString() || 0}, M: {inventory.medium?.toLocaleString() || 0}, S: {inventory.small?.toLocaleString() || 0}
+          </div>
         </div>
 
         {/* Damage Card */}
@@ -115,8 +122,10 @@ const EggInventory = () => {
                 <tr>
                   <th>Date</th>
                   <th>Movement</th>
-                  <th>Egg Grade</th>
-                  <th className="text-right">Quantity</th>
+                  <th className="text-right">Large</th>
+                  <th className="text-right">Medium</th>
+                  <th className="text-right">Small</th>
+                  <th className="text-right">Total Quantity</th>
                   <th>Source / Reference</th>
                 </tr>
               </thead>
@@ -135,7 +144,9 @@ const EggInventory = () => {
                         </span>
                       )}
                     </td>
-                    <td className="font-medium">{row.grade}</td>
+                    <td className="text-right font-medium text-muted">{row.large}</td>
+                    <td className="text-right font-medium text-muted">{row.medium}</td>
+                    <td className="text-right font-medium text-muted">{row.small}</td>
                     <td className="text-right font-medium">
                       {row.type === 'IN' ? '+' : '-'}{row.quantity} {row.unit}
                     </td>

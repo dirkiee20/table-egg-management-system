@@ -101,7 +101,7 @@ const AdminDashboard = ({ data }) => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <h4 style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: '500', marginBottom: '4px' }}>Recent Sales Volume</h4>
-              <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-main)' }}>${totalSales.toFixed(2)}</div>
+              <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-main)' }}>₱{totalSales.toFixed(2)}</div>
               <div style={{ fontSize: '0.75rem', color: '#16a34a' }}>Across {sales.length} transactions</div>
             </div>
             <div style={{ padding: '8px', backgroundColor: '#dcfce7', borderRadius: '8px', color: '#16a34a' }}><ShoppingCart size={22} /></div>
@@ -117,11 +117,11 @@ const AdminDashboard = ({ data }) => {
           <div style={{ padding: '20px', display: 'flex', justifyContent: 'space-between' }}>
             <div>
               <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '4px' }}>Gross Income</div>
-              <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#16a34a' }}>${totalIncome.toFixed(2)}</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#16a34a' }}>₱{totalIncome.toFixed(2)}</div>
             </div>
             <div style={{ textAlign: 'right' }}>
               <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '4px' }}>Operating Expenses</div>
-              <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#dc2626' }}>${totalExpenses.toFixed(2)}</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#dc2626' }}>₱{totalExpenses.toFixed(2)}</div>
             </div>
           </div>
         </div>

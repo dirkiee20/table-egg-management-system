@@ -1,59 +1,123 @@
 import React, { useState, useEffect } from 'react';
 import { Download, TrendingUp, TrendingDown, CircleDollarSign, Users, Package, Loader2, AlertCircle } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { api } from '../services/api';
 import '../App.css';
 
 const SalesMonitoring = () => {
   const [sales, setSales] = useState([]);
+  const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [filter, setFilter] = useState('Last 7 Days');
 
   useEffect(() => {
-    loadSales();
+    loadData();
   }, []);
 
-  const loadSales = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const data = await api.sales.getAll();
-      setSales(data);
+      const [salesData, expensesData] = await Promise.all([
+        api.sales.getAll(),
+        api.expenses.getAll()
+      ]);
+      setSales(salesData);
+      setExpenses(expensesData);
     } catch (err) {
-      setErrorMsg("Failed to retrieve sales monitoring data.");
+      setErrorMsg("Failed to retrieve monitoring data.");
     } finally {
       setLoading(false);
     }
   };
 
-  const totalRevenue = sales.reduce((sum, s) => sum + Number(s.total), 0);
-  const totalTrays = sales.reduce((sum, s) => sum + Number(s.traysSold), 0);
-  const totalOrders = sales.length;
-  // Deduplicate customer names roughly
-  const uniqueCustomers = new Set(sales.map(s => s.customer?.toLowerCase().trim())).size;
-  const avgOrderValue = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
+  const padZero = (n) => n < 10 ? '0' + n : n;
+  
+  const getFilteredDates = () => {
+    const now = new Date();
+    if (filter === 'Last 7 Days') {
+      const dates = [];
+      for(let i=6; i>=0; i--) {
+        let d = new Date();
+        d.setDate(now.getDate() - i);
+        dates.push(d);
+      }
+      return dates;
+    } else if (filter === 'This Month') {
+      const dates = [];
+      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      for(let i=1; i<=daysInMonth; i++) {
+        dates.push(new Date(now.getFullYear(), now.getMonth(), i));
+      }
+      return dates;
+    } else if (filter === 'Last Month') {
+      const dates = [];
+      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const daysInMonth = new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 0).getDate();
+      for(let i=1; i<=daysInMonth; i++) {
+        dates.push(new Date(lastMonth.getFullYear(), lastMonth.getMonth(), i));
+      }
+      return dates;
+    }
+    return [];
+  };
 
   const buildChartData = () => {
      let chartMap = {};
-     for(let i=6; i>=0; i--) {
-        let d = new Date();
-        d.setDate(d.getDate() - i);
-        let dateStr = d.toISOString().split('T')[0];
-        let dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
-        chartMap[dateStr] = { name: dayName, revenue: 0, trays: 0 };
-     }
+     const dates = getFilteredDates();
+     dates.forEach(d => {
+       const dateStr = `${d.getFullYear()}-${padZero(d.getMonth()+1)}-${padZero(d.getDate())}`;
+       let formatName = d.toLocaleDateString('en-US', { weekday: 'short' });
+       if (filter !== 'Last 7 Days') {
+         formatName = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+       }
+       chartMap[dateStr] = { name: formatName, dateStr: dateStr, sales: 0, expenses: 0 };
+     });
      
      sales.forEach(s => {
        if (chartMap[s.date]) {
-         chartMap[s.date].revenue += Number(s.total) || 0;
-         chartMap[s.date].trays += Number(s.traysSold) || 0;
+         chartMap[s.date].sales += Number(s.total) || 0;
+       }
+     });
+
+     expenses.forEach(e => {
+       if (chartMap[e.date]) {
+         chartMap[e.date].expenses += Number(e.amount) || 0;
        }
      });
      
-     // Only format revenue for chart display specifically if needed, but recharts is fine
      return Object.values(chartMap);
   };
 
   const CHART_DATA = buildChartData();
+
+  // Filter raw data for summary cards based on selected filter
+  const getFilteredSales = () => {
+     const chartMap = {};
+     getFilteredDates().forEach(d => {
+        const dateStr = `${d.getFullYear()}-${padZero(d.getMonth()+1)}-${padZero(d.getDate())}`;
+        chartMap[dateStr] = true;
+     });
+     return sales.filter(s => chartMap[s.date]);
+  };
+  const getFilteredExpenses = () => {
+     const chartMap = {};
+     getFilteredDates().forEach(d => {
+        const dateStr = `${d.getFullYear()}-${padZero(d.getMonth()+1)}-${padZero(d.getDate())}`;
+        chartMap[dateStr] = true;
+     });
+     return expenses.filter(e => chartMap[e.date]);
+  };
+
+  const activeSales = getFilteredSales();
+  const activeExpenses = getFilteredExpenses();
+
+  const totalRevenue = activeSales.reduce((sum, s) => sum + Number(s.total), 0);
+  const totalExpenseNum = activeExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
+  const totalTrays = activeSales.reduce((sum, s) => sum + Number(s.traysSold), 0);
+  const totalOrders = activeSales.length;
+  const uniqueCustomers = new Set(activeSales.map(s => s.customer?.toLowerCase().trim())).size;
+  const avgOrderValue = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
 
   if (loading) {
     return (
@@ -66,9 +130,14 @@ const SalesMonitoring = () => {
   return (
     <div className="page-container">
       <div className="page-header">
-        <h2>Sales Analytics Dashboard</h2>
+        <h2>Sales and Expense Monitoring</h2>
         <div style={{ display: 'flex', gap: '12px' }}>
-          <select className="btn-secondary" style={{ backgroundColor: 'white' }}>
+          <select 
+            className="btn-secondary" 
+            style={{ backgroundColor: 'white' }}
+            value={filter}
+            onChange={e => setFilter(e.target.value)}
+          >
             <option>Last 7 Days</option>
             <option>This Month</option>
             <option>Last Month</option>
@@ -88,19 +157,19 @@ const SalesMonitoring = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <h4 style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: '500', marginBottom: '4px' }}>Total Revenue</h4>
-              <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-main)' }}>${totalRevenue.toFixed(2)}</div>
+              <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-main)' }}>₱{totalRevenue.toFixed(2)}</div>
             </div>
-            <div style={{ padding: '8px', backgroundColor: '#dcfce7', borderRadius: '8px', color: '#16a34a' }}><CircleDollarSign size={24} /></div>
+            <div style={{ padding: '8px', backgroundColor: '#dcfce7', borderRadius: '8px', color: '#16a34a' }}><TrendingUp size={24} /></div>
           </div>
         </div>
 
         <div className="card" style={{ padding: '24px', marginBottom: 0 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <h4 style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: '500', marginBottom: '4px' }}>Trays Sold</h4>
-              <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-main)' }}>{totalTrays}</div>
+              <h4 style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: '500', marginBottom: '4px' }}>Total Expenses</h4>
+              <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#dc2626' }}>₱{totalExpenseNum.toFixed(2)}</div>
             </div>
-            <div style={{ padding: '8px', backgroundColor: '#eff6ff', borderRadius: '8px', color: '#3b82f6' }}><Package size={24} /></div>
+            <div style={{ padding: '8px', backgroundColor: '#fee2e2', borderRadius: '8px', color: '#dc2626' }}><TrendingDown size={24} /></div>
           </div>
         </div>
 
@@ -108,7 +177,7 @@ const SalesMonitoring = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <h4 style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: '500', marginBottom: '4px' }}>Avg. Order Value</h4>
-              <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-main)' }}>${avgOrderValue.toFixed(2)}</div>
+              <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-main)' }}>₱{avgOrderValue.toFixed(2)}</div>
             </div>
             <div style={{ padding: '8px', backgroundColor: '#fef3c7', borderRadius: '8px', color: '#d97706' }}><CircleDollarSign size={24} /></div>
           </div>
@@ -127,18 +196,18 @@ const SalesMonitoring = () => {
       </div>
 
       <div className="card">
-        <h3 style={{ fontSize: '1.125rem', color: 'var(--text-main)', marginBottom: '24px' }}>7-Day Revenue & Volume Trends</h3>
+        <h3 style={{ fontSize: '1.125rem', color: 'var(--text-main)', marginBottom: '24px' }}>Sales vs Expenses Trend ({filter})</h3>
         <div style={{ width: '100%', height: '350px' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={CHART_DATA} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+            <LineChart data={CHART_DATA} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
               <XAxis dataKey="name" axisLine={false} tickLine={false} />
-              <YAxis yAxisId="left" orientation="left" stroke="#3b82f6" axisLine={false} tickLine={false} tickFormatter={(value) => `$${value}`} />
-              <YAxis yAxisId="right" orientation="right" stroke="#eab308" axisLine={false} tickLine={false} />
+              <YAxis orientation="left" stroke="#3b82f6" axisLine={false} tickLine={false} tickFormatter={(value) => `₱${value}`} />
               <Tooltip cursor={{fill: 'transparent'}} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-              <Bar yAxisId="left" dataKey="revenue" fill="#3b82f6" name="Revenue ($)" radius={[4, 4, 0, 0]} barSize={40} />
-              <Bar yAxisId="right" dataKey="trays" fill="#fef08a" name="Trays Sold" radius={[4, 4, 0, 0]} barSize={40} />
-            </BarChart>
+              <Legend verticalAlign="top" height={36}/>
+              <Line type="monotone" dataKey="sales" name="Sales (₱)" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+              <Line type="monotone" dataKey="expenses" name="Expenses (₱)" stroke="#dc2626" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+            </LineChart>
           </ResponsiveContainer>
         </div>
       </div>

@@ -15,6 +15,7 @@ import Calendar from './pages/Calendar';
 import VaccinationRecords from './pages/VaccinationRecords';
 import EggProductionRecords from './pages/EggProductionRecords';
 import HatcheryRecords from './pages/HatcheryRecords';
+import FeedManagement from './pages/FeedManagement';
 import StaffManagement from './pages/StaffManagement';
 import ExpenseManagement from './pages/ExpenseManagement';
 import IncomeManagement from './pages/IncomeManagement';
@@ -63,6 +64,7 @@ const AppRoutes = () => {
                 <Route path="/production" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]}><DailyEggProduction /></ProtectedRoute>} />
                 <Route path="/production-records" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]}><EggProductionRecords /></ProtectedRoute>} />
                 <Route path="/inventory" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]}><EggInventory /></ProtectedRoute>} />
+                <Route path="/feed" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]}><FeedManagement /></ProtectedRoute>} />
                 <Route path="/vaccinations" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]}><VaccinationRecords /></ProtectedRoute>} />
                 <Route path="/hatchery" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]}><HatcheryRecords /></ProtectedRoute>} />
 
