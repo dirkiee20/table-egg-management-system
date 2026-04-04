@@ -92,6 +92,8 @@ export const api = {
   },
   staff: {
     getAll: () => apiClient('/staff'),
-    create: (data) => apiClient('/staff', { method: 'POST', body: JSON.stringify(data) })
-  }
+    create: (data) => apiClient('/staff', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id, data) => apiClient(`/staff/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id) => apiClient(`/staff/${id}`, { method: 'DELETE' })
+  },
 };

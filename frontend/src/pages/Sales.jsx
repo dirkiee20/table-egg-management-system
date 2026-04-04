@@ -124,6 +124,8 @@ const Sales = () => {
                 <th>Invoice ID</th>
                 <th>Date</th>
                 <th>Customer</th>
+                <th>Contact</th>
+                <th>Address</th>
                 <th className="text-right">Quantity</th>
                 <th className="text-right">Total (₱)</th>
                 <th>Payment Status</th>
@@ -133,13 +135,13 @@ const Sales = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: '32px' }}>
+                  <td colSpan="9" style={{ textAlign: 'center', padding: '32px' }}>
                     <Loader2 className="spin" size={24} style={{ margin: '0 auto', color: 'var(--primary)' }} />
                   </td>
                 </tr>
               ) : sales.length === 0 ? (
                 <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
+                  <td colSpan="9" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
                     No sales recorded yet.
                   </td>
                 </tr>
@@ -148,6 +150,8 @@ const Sales = () => {
                   <td className="font-medium text-muted">INV-{sale.id}</td>
                   <td>{sale.date}</td>
                   <td className="font-medium">{sale.customer_name || sale.customer}</td>
+                  <td className="text-muted">{sale.contact_no || '-'}</td>
+                  <td className="text-muted">{sale.address || '-'}</td>
                   <td className="text-right">{sale.traysSold} Trays</td>
                   <td className="text-right font-medium">₱{sale.total?.toFixed(2)}</td>
                   <td>

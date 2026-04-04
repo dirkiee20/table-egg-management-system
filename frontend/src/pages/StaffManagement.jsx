@@ -11,11 +11,16 @@ const StaffManagement = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Distinguish edit flow
+  const [editingId, setEditingId] = useState(null);
+
   const [formData, setFormData] = useState({
     name: '',
     role: 'Staff',
     email: '',
-    contactNumber: ''
+    contactNumber: '',
+    status: 'Active',
+    password: ''
   });
 
   useEffect(() => {
@@ -34,28 +39,69 @@ const StaffManagement = () => {
     }
   };
 
-  const handleCreate = async (e) => {
+  const handleEditClick = (s) => {
+    setEditingId(s.id);
+    setFormData({
+       name: s.name,
+       role: s.role,
+       email: s.email || '',
+       contactNumber: s.contactNumber || '',
+       status: s.status || 'Active',
+       password: ''
+    });
+    setIsFormOpen(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDelete = async (id, name) => {
+    const confirmation = window.confirm(`Are you sure you want to deactivate and delete ${name}'s account? This will remove their login access.`);
+    if (!confirmation) return;
+    
+    try {
+       setLoading(true);
+       await api.staff.delete(id);
+       await loadStaff();
+    } catch(err) {
+       setErrorMsg("Failed to delete staff account.");
+       setLoading(false);
+    }
+  };
+
+  const handleCreateOrUpdate = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMsg(null);
     try {
-      await api.staff.create(formData);
+      if (editingId) {
+         await api.staff.update(editingId, formData);
+      } else {
+         await api.staff.create(formData);
+      }
       
       await loadStaff();
+      
+      // reset form
       setIsFormOpen(false);
-      setFormData({ name: '', role: 'Staff', email: '', contactNumber: '' });
+      setEditingId(null);
+      setFormData({ name: '', role: 'Staff', email: '', contactNumber: '', status: 'Active', password: '' });
     } catch (err) {
-      setErrorMsg("Failed to create staff account constraints.");
+      setErrorMsg(editingId ? "Failed to update staff account." : "Failed to create staff account constraints.");
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const cancelEdit = () => {
+     setIsFormOpen(false);
+     setEditingId(null);
+     setFormData({ name: '', role: 'Staff', email: '', contactNumber: '', status: 'Active', password: '' });
   };
 
   return (
     <div className="page-container">
       <div className="page-header">
         <h2>Staff Management</h2>
-        <button className="btn-primary" onClick={() => setIsFormOpen(!isFormOpen)}>
+        <button className="btn-primary" onClick={() => isFormOpen ? cancelEdit() : setIsFormOpen(true)}>
           {isFormOpen ? 'Close Form' : <><Plus size={18} /> Add Employee</>}
         </button>
       </div>
@@ -67,9 +113,12 @@ const StaffManagement = () => {
       )}
 
       {isFormOpen && (
-        <div className="card" style={{ borderLeft: '4px solid #10b981', marginBottom: '32px' }}>
-          <h3 style={{ fontSize: '1.125rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><Shield size={20} color="#10b981" /> Register New Account</h3>
-          <form className="standard-form" style={{ padding: 0 }} onSubmit={handleCreate}>
+        <div className="card" style={{ borderLeft: `4px solid ${editingId ? '#3b82f6' : '#10b981'}`, marginBottom: '32px' }}>
+          <h3 style={{ fontSize: '1.125rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+             <Shield size={20} color={editingId ? '#3b82f6' : '#10b981'} /> 
+             {editingId ? 'Edit Account Credentials' : 'Register New Account'}
+          </h3>
+          <form className="standard-form" style={{ padding: 0 }} onSubmit={handleCreateOrUpdate}>
             <div className="form-row">
               <div className="form-group">
                 <label>Full Name</label>
@@ -94,10 +143,34 @@ const StaffManagement = () => {
                 <input type="tel" placeholder="+1 555-xxxx" required value={formData.contactNumber} onChange={e => setFormData({...formData, contactNumber: e.target.value})} disabled={isSubmitting} />
               </div>
             </div>
+            
+            <div className="form-row">
+              <div className={`form-group ${editingId ? '' : 'full-width'}`} style={{ maxWidth: editingId ? '50%' : '100%' }}>
+                <label>{editingId ? "Reset Password (Optional)" : "Login Password"}</label>
+                <input type="password" placeholder="Enter secure password" required={!editingId} value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} disabled={isSubmitting} />
+              </div>
+            
+            {editingId && (
+                <div className="form-group" style={{ maxWidth: '50%' }}>
+                  <label>Account Status</label>
+                  <select required value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} disabled={isSubmitting}>
+                    <option value="Active">Active</option>
+                    <option value="On Leave">On Leave</option>
+                    <option value="Terminated">Terminated</option>
+                  </select>
+                </div>
+            )}
+            </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', gap: '12px' }}>
+              {editingId && (
+                <button type="button" className="btn-secondary" onClick={cancelEdit} disabled={isSubmitting}>
+                  Cancel
+                </button>
+              )}
               <button type="submit" className="btn-primary" disabled={isSubmitting} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {isSubmitting ? <Loader2 className="spin" size={18} /> : null} Create Staff Account
+                {isSubmitting ? <Loader2 className="spin" size={18} /> : null} 
+                {editingId ? 'Update Credentials' : 'Create Staff Account'}
               </button>
             </div>
           </form>
@@ -141,13 +214,13 @@ const StaffManagement = () => {
                   <td>{s.email}</td>
                   <td>{s.contactNumber}</td>
                   <td>
-                    <span className={`status-badge active`} style={{ backgroundColor: s.status === 'On Leave' ? '#fed7aa' : '', color: s.status === 'On Leave' ? '#c2410c' : ''}}>
+                    <span className={`status-badge active`} style={{ backgroundColor: s.status === 'On Leave' ? '#fed7aa' : (s.status === 'Terminated' ? '#fee2e2' : ''), color: s.status === 'On Leave' ? '#c2410c' : (s.status === 'Terminated' ? '#dc2626' : '')}}>
                       {s.status}
                     </span>
                   </td>
                   <td className="actions-cell">
-                    <button className="action-btn edit" title="Edit Profile Disabled"><Edit2 size={16} /></button>
-                    <button className="action-btn delete" title="Deactivate Account Disabled"><UserMinus size={16} /></button>
+                    <button className="action-btn edit" onClick={() => handleEditClick(s)} title="Edit Profile"><Edit2 size={16} /></button>
+                    <button className="action-btn delete" onClick={() => handleDelete(s.id, s.name)} title="Deactivate Account"><UserMinus size={16} /></button>
                   </td>
                 </tr>
               ))}

@@ -47,7 +47,7 @@ If you generated a `farm.db` database in an older version of the software, you *
 # While in the backend folder with the venv active
 python app\migrate.py
 ```
-
+    
 ### 3. Start the Frontend (React UI)
 Open a **second** terminal tab and run:
 ```powershell

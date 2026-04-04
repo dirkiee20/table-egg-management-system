@@ -198,7 +198,9 @@ def get_staff(db: Session = Depends(get_db), _: User = Depends(require_admin)):
 
 @router.post("/staff", response_model=schemas.StaffResponse)
 def create_staff(staff: schemas.StaffCreate, db: Session = Depends(get_db), _: User = Depends(require_admin)):
-    new_record = Staff(**staff.dict())
+    staff_dict = staff.dict()
+    password = staff_dict.pop("password", None) or "defaultpass123"
+    new_record = Staff(**staff_dict)
     db.add(new_record)
     
     # Also create a login user account 
@@ -210,13 +212,59 @@ def create_staff(staff: schemas.StaffCreate, db: Session = Depends(get_db), _: U
                 email=staff.email,
                 name=staff.name,
                 role=staff.role,
-                hashed_password=get_password_hash("defaultpass123")
+                hashed_password=get_password_hash(password)
             )
             db.add(new_user)
             
     db.commit()
     db.refresh(new_record)
     return new_record
+
+@router.put("/staff/{staff_id}", response_model=schemas.StaffResponse)
+def update_staff(staff_id: int, staff_data: schemas.StaffCreate, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    staff = db.query(Staff).filter(Staff.id == staff_id).first()
+    if not staff:
+        raise HTTPException(status_code=404, detail="Staff not found")
+    
+    old_email = staff.email
+    
+    staff_dict = staff_data.dict(exclude_unset=True)
+    password = staff_dict.pop("password", None)
+    
+    for key, value in staff_dict.items():
+        setattr(staff, key, value)
+        
+    # Sync matching user if they had an email
+    if old_email:
+        user = db.query(User).filter(User.email == old_email).first()
+        if user:
+            user.email = staff.email
+            user.name = staff.name
+            user.role = staff.role
+            if password:
+                from app.core.security import get_password_hash
+                user.hashed_password = get_password_hash(password)
+            
+    db.commit()
+    db.refresh(staff)
+    return staff
+
+@router.delete("/staff/{staff_id}")
+def delete_staff(staff_id: int, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    staff = db.query(Staff).filter(Staff.id == staff_id).first()
+    if not staff:
+        raise HTTPException(status_code=404, detail="Staff not found")
+        
+    db.delete(staff)
+    
+    # Alternatively you might just deactivate the user instead of deleting, but to fulfill "delete", let's drop them or at least drop staff record.
+    if staff.email:
+        user = db.query(User).filter(User.email == staff.email).first()
+        if user:
+            db.delete(user)
+            
+    db.commit()
+    return {"message": "Staff deleted successfully"}
 
 # --- FEED MANAGEMENT ---
 from app.models import FeedConsumption

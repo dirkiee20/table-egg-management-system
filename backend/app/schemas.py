@@ -162,7 +162,8 @@ class StaffBase(BaseModel):
     email: Optional[str] = None
     status: Optional[str] = "Active"
 
-class StaffCreate(StaffBase): pass
+class StaffCreate(StaffBase): 
+    password: Optional[str] = None
 class StaffResponse(StaffBase):
     id: int
     status: str
