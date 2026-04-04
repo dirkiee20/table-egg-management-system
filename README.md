@@ -41,7 +41,14 @@ uvicorn app.main:app --reload --port 8000
 ```
 *Tip: You can view the live API documentation by visiting `http://127.0.0.1:8000/docs` in your browser!*
 
-### 2. Start the Frontend (React UI)
+### 2. Database Migration (For Existing Users)
+If you generated a `farm.db` database in an older version of the software, you **must run** the data migration script before using the application to create all the new table columns and size-based inventory tracking required by the latest patch.
+```powershell
+# While in the backend folder with the venv active
+python app\migrate.py
+```
+
+### 3. Start the Frontend (React UI)
 Open a **second** terminal tab and run:
 ```powershell
 # Navigate to the frontend directory
