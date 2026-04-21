@@ -12,6 +12,8 @@ import SalesMonitoring from './pages/SalesMonitoring';
 
 // Phase 4 Pages (New / Scaffolded)
 import Calendar from './pages/Calendar';
+import MyAccount from './pages/MyAccount';
+import ProductionReport from './pages/ProductionReport';
 import VaccinationRecords from './pages/VaccinationRecords';
 import EggProductionRecords from './pages/EggProductionRecords';
 import HatcheryRecords from './pages/HatcheryRecords';
@@ -21,6 +23,7 @@ import ExpenseManagement from './pages/ExpenseManagement';
 import IncomeManagement from './pages/IncomeManagement';
 import Sales from './pages/Sales';
 import Login from './pages/Login';
+import Pricing from './pages/Pricing';
 
 import './App.css';
 
@@ -60,7 +63,9 @@ const AppRoutes = () => {
                 
                 {/* ----- SHARED ACCESS (Staff & Admin) ----- */}
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/account" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]}><MyAccount /></ProtectedRoute>} />
                 <Route path="/calendar" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]}><Calendar /></ProtectedRoute>} />
+                <Route path="/production-report" element={<ProtectedRoute allowedRoles={[ROLES.STAFF]}><ProductionReport /></ProtectedRoute>} />
                 <Route path="/production" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]}><DailyEggProduction /></ProtectedRoute>} />
                 <Route path="/production-records" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]}><EggProductionRecords /></ProtectedRoute>} />
                 <Route path="/inventory" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]}><EggInventory /></ProtectedRoute>} />
@@ -70,8 +75,9 @@ const AppRoutes = () => {
 
                 {/* ----- ADMIN ONLY ACCESS ----- */}
                 <Route path="/flocks" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]}><FlockManagement /></ProtectedRoute>} />
-                <Route path="/sales" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]}><Sales /></ProtectedRoute>} />
+                <Route path="/sales" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]}><Sales /></ProtectedRoute>} />
                 <Route path="/sales-monitoring" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]}><SalesMonitoring /></ProtectedRoute>} />
+                <Route path="/pricing" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]}><Pricing /></ProtectedRoute>} />
                 <Route path="/staff" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]}><StaffManagement /></ProtectedRoute>} />
                 <Route path="/expenses" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]}><ExpenseManagement /></ProtectedRoute>} />
                 <Route path="/income" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]}><IncomeManagement /></ProtectedRoute>} />

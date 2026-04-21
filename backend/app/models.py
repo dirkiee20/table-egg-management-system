@@ -7,6 +7,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
+    original_password_hash = Column(String, nullable=True)
     name = Column(String)
     role = Column(String)
 
@@ -18,6 +19,7 @@ class Flock(Base):
     breed = Column(String)
     ageWeeks = Column(Integer)
     quantity = Column(Integer)
+    mortality = Column(Integer, default=0)
     status = Column(String)
 
 class Production(Base):
@@ -29,8 +31,12 @@ class Production(Base):
     large = Column(Integer, default=0)
     medium = Column(Integer, default=0)
     small = Column(Integer, default=0)
+    jumbo = Column(Integer, default=0)
+    extralarge = Column(Integer, default=0)
+    peewee = Column(Integer, default=0)
     cracked = Column(Integer, default=0)
     reject = Column(Integer, default=0)
+    bunkig = Column(Integer, default=0)
     totalGoodEggs = Column(Integer, default=0)
     damagedEggs = Column(Integer) # Legacy
     mortality = Column(Integer)
@@ -45,6 +51,9 @@ class Inventory(Base):
     large = Column(Integer, default=0)
     medium = Column(Integer, default=0)
     small = Column(Integer, default=0)
+    jumbo = Column(Integer, default=0)
+    extralarge = Column(Integer, default=0)
+    peewee = Column(Integer, default=0)
 
 class Sale(Base):
     __tablename__ = "sales"
@@ -57,7 +66,9 @@ class Sale(Base):
     traysSold = Column(Integer)
     pricePerTray = Column(Float)
     total = Column(Float)
+    balance = Column(Float, default=0.0)
     status = Column(String)
+    staff_incharge = Column(String, nullable=True)
     createdAt = Column(DateTime, default=datetime.utcnow)
 
 class Income(Base):

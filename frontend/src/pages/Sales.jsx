@@ -16,9 +16,26 @@ const Sales = () => {
   const [address, setAddress] = useState('');
   const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0]);
   const [isPaid, setIsPaid] = useState(true);
+  const [amountPaid, setAmountPaid] = useState('');
+  const [discount, setDiscount] = useState(0);
   const [lineItems, setLineItems] = useState([
-    { id: 1, grade: 'Large', quantity: 10, price: 150.00 } // price changed to PHP mock default
+    { id: 1, grade: 'Large', quantity: 10, price: 270.00 }
   ]);
+  const [editingId, setEditingId] = useState(null);
+
+  // Pricing from local storage
+  const [pricing, setPricing] = useState({
+    Jumbo: 300, 'Extra-Large': 285, Large: 270, Medium: 255, Small: 240, Peewee: 225
+  });
+
+  useEffect(() => {
+    const saved = localStorage.getItem('egg_pricing');
+    if (saved) {
+      try {
+        setPricing(JSON.parse(saved));
+      } catch (e) {}
+    }
+  }, []);
 
   useEffect(() => {
     loadSales();
@@ -48,13 +65,21 @@ const Sales = () => {
   };
 
   const updateLineItem = (id, field, value) => {
-    setLineItems(lineItems.map(item => 
-      item.id === id ? { ...item, [field]: value } : item
-    ));
+    setLineItems(lineItems.map(item => {
+      if (item.id === id) {
+        const updated = { ...item, [field]: value };
+        if (field === 'grade') {
+          updated.price = pricing[value] || 0;
+        }
+        return updated;
+      }
+      return item;
+    }));
   };
 
   const calculateTotal = () => {
-    return lineItems.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.price)), 0);
+    const subtotal = lineItems.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.price)), 0);
+    return Math.max(0, subtotal - Number(discount));
   };
   
   const calculateTotalQuantity = () => {
@@ -70,8 +95,15 @@ const Sales = () => {
       const totalQty = calculateTotalQuantity();
       const totalAmt = calculateTotal();
       const avgPrice = totalQty > 0 ? (totalAmt / totalQty) : 0;
+      
+      const amtPaidNum = isPaid ? totalAmt : (Number(amountPaid) || 0);
+      const balance = Math.max(0, totalAmt - amtPaidNum);
+      
+      let finalStatus = 'Unpaid';
+      if (balance === 0) finalStatus = 'Paid';
+      else if (balance < totalAmt) finalStatus = 'Partial';
 
-      await api.sales.create({
+      const payload = {
         customer_name: customerName || 'Walk-in Customer',
         contact_no: contactNo,
         address: address,
@@ -79,8 +111,15 @@ const Sales = () => {
         traysSold: totalQty,
         pricePerTray: Number(avgPrice.toFixed(2)),
         total: Number(totalAmt.toFixed(2)),
-        status: isPaid ? 'Paid' : 'Unpaid'
-      });
+        balance: Number(balance.toFixed(2)),
+        status: finalStatus
+      };
+
+      if (editingId) {
+        await api.sales.update(editingId, payload);
+      } else {
+        await api.sales.create(payload);
+      }
 
       // Reload sales to fetch new row and verify inventory deduction
       await loadSales();
@@ -90,7 +129,10 @@ const Sales = () => {
       setCustomerName('');
       setContactNo('');
       setAddress('');
-      setLineItems([{ id: Date.now(), grade: 'Large', quantity: 10, price: 150.00 }]);
+      setDiscount(0);
+      setAmountPaid('');
+      setEditingId(null);
+      setLineItems([{ id: Date.now(), grade: 'Large', quantity: 10, price: pricing['Large'] || 270.00 }]);
     } catch (err) {
       console.error("Sale failed:", err);
       // Surface backend validation errors (like insufficient inventory)
@@ -100,11 +142,34 @@ const Sales = () => {
     }
   };
 
+  const openForm = (sale = null) => {
+    if (sale) {
+      setEditingId(sale.id);
+      setCustomerName(sale.customer_name || sale.customer || '');
+      setContactNo(sale.contact_no || '');
+      setAddress(sale.address || '');
+      setSaleDate(sale.date);
+      setLineItems([{ id: 1, grade: 'Mixed', quantity: sale.traysSold, price: sale.pricePerTray }]);
+      setDiscount(0);
+      setIsPaid(sale.status === 'Paid');
+      setAmountPaid(sale.total - (sale.balance || 0));
+    } else {
+      setEditingId(null);
+      setCustomerName('');
+      setContactNo('');
+      setAddress('');
+      setDiscount(0);
+      setAmountPaid('');
+      setLineItems([{ id: Date.now(), grade: 'Large', quantity: 1, price: pricing['Large'] || 270.00 }]);
+    }
+    setIsModalOpen(true);
+  };
+
   return (
     <div className="page-container">
       <div className="page-header">
         <h2>Sales Transactions</h2>
-        <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
+        <button className="btn-primary" onClick={() => openForm()}>
           <CircleDollarSign size={18} /> New Egg Sale
         </button>
       </div>
@@ -126,6 +191,7 @@ const Sales = () => {
                 <th>Address</th>
                 <th className="text-right">Quantity</th>
                 <th className="text-right">Total (₱)</th>
+                <th className="text-right">Balance</th>
                 <th>Payment Status</th>
                 <th className="text-right">Actions</th>
               </tr>
@@ -152,15 +218,20 @@ const Sales = () => {
                   <td className="text-muted">{sale.address || '-'}</td>
                   <td className="text-right">{sale.traysSold} Trays</td>
                   <td className="text-right font-medium">₱{sale.total?.toFixed(2)}</td>
+                  <td className="text-right" style={{ color: sale.balance > 0 ? 'var(--danger)' : 'var(--success)' }}>
+                    ₱{(sale.balance || 0).toFixed(2)}
+                  </td>
                   <td>
                     {sale.status === 'Paid' ? (
-                      <span className="badge badge-success"><CheckCircle2 size={11} /> Paid</span>
+                      <span className="badge badge-success"><CheckCircle2 size={11} /> PAID</span>
+                    ) : sale.status === 'Partial' ? (
+                      <span className="badge" style={{ backgroundColor: '#fef3c7', color: '#b45309' }}>PARTIAL</span>
                     ) : (
-                      <span className="badge badge-warning">Unpaid</span>
+                      <span className="badge badge-error">UNPAID</span>
                     )}
                   </td>
                   <td className="actions-cell">
-                    <button className="action-btn" title="View Receipt">
+                    <button className="action-btn edit" onClick={() => openForm(sale)} title="Edit Sale">
                       <FileText size={16} />
                     </button>
                   </td>
@@ -247,20 +318,34 @@ const Sales = () => {
                 </button>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '32px', borderTop: '1px solid #e2e8f0', paddingTop: '24px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: '500' }}>
-                  <input type="checkbox" checked={isPaid} onChange={e => setIsPaid(e.target.checked)} disabled={isSubmitting} style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }} />
-                  Mark as Paid
-                </label>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
+                <div className="form-group" style={{ width: '150px' }}>
+                  <label style={{ fontSize: '0.75rem' }}>Discount (₱)</label>
+                  <input type="number" min="0" step="0.01" value={discount} onChange={e => setDiscount(e.target.value)} disabled={isSubmitting} />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', borderTop: '1px solid #e2e8f0', paddingTop: '24px', flexWrap: 'wrap', gap: '16px' }}>
+                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: '500', whiteSpace: 'nowrap' }}>
+                    <input type="checkbox" checked={isPaid} onChange={e => setIsPaid(e.target.checked)} disabled={isSubmitting} style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }} />
+                    Full Paid
+                  </label>
+                  {!isPaid && (
+                    <div className="form-group" style={{ marginBottom: 0, width: '130px' }}>
+                      <input type="number" min="0" step="0.01" placeholder="Amount Paid" value={amountPaid} onChange={e => setAmountPaid(e.target.value)} disabled={isSubmitting} style={{ padding: '6px 12px' }} />
+                    </div>
+                  )}
+                </div>
                 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '24px', marginLeft: 'auto' }}>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Total Amount</div>
                     <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-main)' }}>₱{calculateTotal().toFixed(2)}</div>
                   </div>
                   <button type="submit" className="btn-primary" disabled={isSubmitting} style={{ padding: '12px 24px', fontSize: '1rem' }}>
                     {isSubmitting ? <Loader2 className="spin" size={20} /> : <CheckCircle2 size={20} />} 
-                    {isSubmitting ? 'Processing...' : 'Complete Sale'}
+                    {isSubmitting ? 'Processing...' : (editingId ? 'Update Sale' : 'Complete Sale')}
                   </button>
                 </div>
               </div>

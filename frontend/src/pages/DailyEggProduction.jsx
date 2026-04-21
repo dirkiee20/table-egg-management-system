@@ -7,9 +7,13 @@ const DailyEggProduction = () => {
   const [formData, setFormData] = useState({
     flockId: '',
     date: new Date().toISOString().split('T')[0],
+    jumbo: '',
+    extralarge: '',
     large: '',
     medium: '',
     small: '',
+    peewee: '',
+    bunkig: '',
     cracked: '',
     reject: '',
     remarks: ''
@@ -22,7 +26,7 @@ const DailyEggProduction = () => {
     const fetchFlocks = async () => {
       try {
         const data = await api.flocks.getAll();
-        setFlocks(data.filter(f => f.status === 'Active')); 
+        setFlocks(data.filter(f => f.status === 'Active'));
       } catch (err) {
         console.error("Failed to load flocks:", err);
       }
@@ -30,22 +34,26 @@ const DailyEggProduction = () => {
     fetchFlocks();
   }, []);
 
-  const totalGood = (Number(formData.large) || 0) + (Number(formData.medium) || 0) + (Number(formData.small) || 0);
+  const totalGood = (Number(formData.jumbo) || 0) + (Number(formData.extralarge) || 0) + (Number(formData.large) || 0) + (Number(formData.medium) || 0) + (Number(formData.small) || 0) + (Number(formData.peewee) || 0);
+  const totalTrays = Math.floor(totalGood / 30);
   const crackedVal = Number(formData.cracked) || 0;
   const rejectVal = Number(formData.reject) || 0;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     setSubmitStatus('loading');
-    
+
     try {
       await api.production.create({
         date: formData.date,
         flockId: formData.flockId,
+        jumbo: Number(formData.jumbo) || 0,
+        extralarge: Number(formData.extralarge) || 0,
         large: Number(formData.large) || 0,
         medium: Number(formData.medium) || 0,
         small: Number(formData.small) || 0,
+        peewee: Number(formData.peewee) || 0,
         cracked: Number(formData.cracked) || 0,
         reject: Number(formData.reject) || 0,
         mortality: 0,
@@ -53,12 +61,16 @@ const DailyEggProduction = () => {
       });
 
       setSubmitStatus('success');
-      
+
       setFormData(prev => ({
         ...prev,
+        jumbo: '',
+        extralarge: '',
         large: '',
         medium: '',
         small: '',
+        peewee: '',
+        bunkig: '',
         cracked: '',
         reject: '',
         remarks: ''
@@ -71,11 +83,11 @@ const DailyEggProduction = () => {
     }
   };
 
-  const isHighLoss = totalGood > 0 && 
+  const isHighLoss = totalGood > 0 &&
     ((crackedVal + rejectVal) / totalGood) > 0.05;
 
   return (
-    <div className="page-container" style={{ maxWidth: '600px' }}>
+    <div className="page-container">
       <div className="page-header">
         <h2>Daily Egg Production</h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Record the daily collection and grading numbers.</p>
@@ -87,7 +99,7 @@ const DailyEggProduction = () => {
             <CheckCircle2 size={20} /> Production record saved successfully!
           </div>
         )}
-        
+
         {submitStatus === 'error' && (
           <div style={{ padding: '12px 16px', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '6px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500' }}>
             <AlertCircle size={20} /> Failed to save production record. Please try again.
@@ -98,20 +110,20 @@ const DailyEggProduction = () => {
           <div className="form-row">
             <div className="form-group">
               <label>Collection Date</label>
-              <input 
-                type="date" 
-                required 
+              <input
+                type="date"
+                required
                 value={formData.date}
-                onChange={e => setFormData({...formData, date: e.target.value})}
+                onChange={e => setFormData({ ...formData, date: e.target.value })}
               />
             </div>
-            
+
             <div className="form-group">
               <label>Target Flock</label>
-              <select 
-                required 
+              <select
+                required
                 value={formData.flockId}
-                onChange={e => setFormData({...formData, flockId: e.target.value})}
+                onChange={e => setFormData({ ...formData, flockId: e.target.value })}
               >
                 <option value="" disabled>Select a flock...</option>
                 {flocks.map(f => (
@@ -128,66 +140,119 @@ const DailyEggProduction = () => {
 
           <div className="form-row">
             <div className="form-group">
+              <label>Jumbo (J)</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                min="0"
+                placeholder="0"
+                value={formData.jumbo}
+                onChange={e => setFormData({ ...formData, jumbo: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Extra-Large (ExL)</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                min="0"
+                placeholder="0"
+                value={formData.extralarge}
+                onChange={e => setFormData({ ...formData, extralarge: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
               <label>Large (L)</label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 inputMode="numeric"
                 min="0"
                 placeholder="0"
                 value={formData.large}
-                onChange={e => setFormData({...formData, large: e.target.value})}
-              />
-            </div>
-            <div className="form-group">
-              <label>Medium (M)</label>
-              <input 
-                type="number" 
-                inputMode="numeric"
-                min="0"
-                placeholder="0"
-                value={formData.medium}
-                onChange={e => setFormData({...formData, medium: e.target.value})}
-              />
-            </div>
-            <div className="form-group">
-              <label>Small (S)</label>
-              <input 
-                type="number" 
-                inputMode="numeric"
-                min="0"
-                placeholder="0"
-                value={formData.small}
-                onChange={e => setFormData({...formData, small: e.target.value})}
+                onChange={e => setFormData({ ...formData, large: e.target.value })}
               />
             </div>
           </div>
 
-          <div style={{ padding: '16px', backgroundColor: '#f0fdf4', color: '#166534', borderRadius: '6px', marginBottom: '20px', fontWeight: 'bold' }}>
-            Total Good Egg: {totalGood}
+          <div className="form-row">
+            <div className="form-group">
+              <label>Medium (M)</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                min="0"
+                placeholder="0"
+                value={formData.medium}
+                onChange={e => setFormData({ ...formData, medium: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Small (S)</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                min="0"
+                placeholder="0"
+                value={formData.small}
+                onChange={e => setFormData({ ...formData, small: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label>Peewee (P)</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                min="0"
+                placeholder="0"
+                value={formData.peewee}
+                onChange={e => setFormData({ ...formData, peewee: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div style={{ padding: '16px', backgroundColor: '#f0fdf4', color: '#166534', borderRadius: '6px', marginBottom: '20px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between' }}>
+            <span>Total Eggs: {totalGood}</span>
+            <span>Total Trays: {totalTrays}</span>
+          </div>
+
+          <h3 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '16px', marginTop: '24px' }}>ODD Stock & Damages</h3>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>ODD Stock - Count per egg</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                min="0"
+                placeholder="0"
+                value={formData.bunkig}
+                onChange={e => setFormData({ ...formData, bunkig: e.target.value })}
+              />
+            </div>
           </div>
 
           <div className="form-row">
             <div className="form-group">
               <label>Cracked</label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 inputMode="numeric"
                 min="0"
                 placeholder="0"
                 value={formData.cracked}
-                onChange={e => setFormData({...formData, cracked: e.target.value})}
+                onChange={e => setFormData({ ...formData, cracked: e.target.value })}
               />
             </div>
-            
+
             <div className="form-group">
               <label>Reject</label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 inputMode="numeric"
                 min="0"
                 placeholder="0"
                 value={formData.reject}
-                onChange={e => setFormData({...formData, reject: e.target.value})}
+                onChange={e => setFormData({ ...formData, reject: e.target.value })}
               />
             </div>
           </div>
@@ -201,18 +266,18 @@ const DailyEggProduction = () => {
 
           <div className="form-group">
             <label>Daily Remarks / Notes (Optional)</label>
-            <textarea 
-              rows="3" 
+            <textarea
+              rows="3"
               placeholder="Any issues with water, temperature shifts, or bird health observed today?"
               value={formData.remarks}
-              onChange={e => setFormData({...formData, remarks: e.target.value})}
+              onChange={e => setFormData({ ...formData, remarks: e.target.value })}
             ></textarea>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '32px' }}>
-            <button 
-              type="submit" 
-              className="btn-primary" 
+            <button
+              type="submit"
+              className="btn-primary"
               style={{ width: '100%', padding: '14px', fontSize: '1rem' }}
               disabled={submitStatus === 'loading'}
             >

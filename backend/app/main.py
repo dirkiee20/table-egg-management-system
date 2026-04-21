@@ -1,11 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base, get_db, SessionLocal
+from app.migrate import run_migrations
 from app.routers import auth
 from app.routers import endpoints
 
 # Create tables
 Base.metadata.create_all(bind=engine)
+run_migrations()
 
 # Seed the demo users automatically on startup
 db = SessionLocal()

@@ -4,6 +4,7 @@ from app.database import get_db
 from app.models import User, Flock, Production, Inventory, Sale, Income, Expense, CalendarEvent, Vaccination, Hatchery, Staff
 import app.schemas as schemas
 from app.routers.auth import get_current_user
+from app.core.security import get_password_hash
 
 router = APIRouter()
 
@@ -34,6 +35,35 @@ def create_flock(flock: schemas.FlockCreate, db: Session = Depends(get_db), _: U
     db.refresh(new_record)
     return new_record
 
+@router.put("/flocks/{flock_id}", response_model=schemas.FlockResponse)
+def update_flock(flock_id: int, flock: schemas.FlockCreate, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    existing = db.query(Flock).filter(Flock.id == flock_id).first()
+    if not existing:
+        raise HTTPException(status_code=404, detail="Flock not found")
+    
+    # Logic: Automatically reduce number_of_hens if mortality is updated
+    if flock.mortality and existing.mortality is not None:
+        diff = flock.mortality - existing.mortality
+        if diff > 0:
+            flock.quantity -= diff
+            if flock.quantity < 0:
+                flock.quantity = 0
+
+    for key, value in flock.dict().items():
+        setattr(existing, key, value)
+    db.commit()
+    db.refresh(existing)
+    return existing
+
+@router.delete("/flocks/{flock_id}")
+def delete_flock(flock_id: int, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    existing = db.query(Flock).filter(Flock.id == flock_id).first()
+    if not existing:
+        raise HTTPException(status_code=404, detail="Flock not found")
+    db.delete(existing)
+    db.commit()
+    return {"message": "Flock deleted"}
+
 # --- PRODUCTION ---
 @router.get("/production", response_model=list[schemas.ProductionResponse])
 def get_production(db: Session = Depends(get_db), _: User = Depends(get_current_user)):
@@ -41,7 +71,7 @@ def get_production(db: Session = Depends(get_db), _: User = Depends(get_current_
 
 @router.post("/production", response_model=schemas.ProductionResponse)
 def create_production(prod: schemas.ProductionCreate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
-    total_good = (prod.large or 0) + (prod.medium or 0) + (prod.small or 0)
+    total_good = (prod.jumbo or 0) + (prod.extralarge or 0) + (prod.large or 0) + (prod.medium or 0) + (prod.small or 0) + (prod.peewee or 0)
     prod.totalGoodEggs = total_good
     prod.eggsCollected = total_good
     prod.damagedEggs = (prod.cracked or 0) + (prod.reject or 0)
@@ -55,6 +85,9 @@ def create_production(prod: schemas.ProductionCreate, db: Session = Depends(get_
     inv.large += (prod.large or 0)
     inv.medium += (prod.medium or 0)
     inv.small += (prod.small or 0)
+    inv.jumbo += (prod.jumbo or 0)
+    inv.extralarge += (prod.extralarge or 0)
+    inv.peewee += (prod.peewee or 0)
 
     db.commit()
     db.refresh(new_record)
@@ -71,7 +104,7 @@ def get_sales(db: Session = Depends(get_db), _: User = Depends(get_current_user)
     return db.query(Sale).all()
 
 @router.post("/sales", response_model=schemas.SaleResponse)
-def create_sale(sale: schemas.SaleCreate, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+def create_sale(sale: schemas.SaleCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     if sale.customer and not sale.customer_name:
         sale.customer_name = sale.customer
     elif sale.customer_name and not sale.customer:
@@ -85,6 +118,7 @@ def create_sale(sale: schemas.SaleCreate, db: Session = Depends(get_db), _: User
 
     # 2. Record Sale
     new_sale = Sale(**sale.dict())
+    new_sale.staff_incharge = current_user.name
     db.add(new_sale)
     db.flush() # Commit sale temporarily to grab ID
     
@@ -94,7 +128,7 @@ def create_sale(sale: schemas.SaleCreate, db: Session = Depends(get_db), _: User
             source=new_sale.customer_name or new_sale.customer,
             referenceType="Sales Invoice",
             referenceId=new_sale.id,
-            amount=new_sale.total,
+            amount=new_sale.total - new_sale.balance,
             date=new_sale.date,
             category="Egg Sales",
             notes="Auto-generated from Invoice"
@@ -104,6 +138,19 @@ def create_sale(sale: schemas.SaleCreate, db: Session = Depends(get_db), _: User
     db.commit()
     db.refresh(new_sale)
     return new_sale
+
+@router.put("/sales/{sale_id}", response_model=schemas.SaleResponse)
+def update_sale(sale_id: int, sale: schemas.SaleCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    existing_sale = db.query(Sale).filter(Sale.id == sale_id).first()
+    if not existing_sale:
+        raise HTTPException(status_code=404, detail="Sale not found")
+        
+    for key, value in sale.dict().items():
+        setattr(existing_sale, key, value)
+        
+    db.commit()
+    db.refresh(existing_sale)
+    return existing_sale
 
 # --- FINANCE (INCOME / EXPENSES) ---
 @router.get("/income", response_model=list[schemas.IncomeResponse])
@@ -207,12 +254,13 @@ def create_staff(staff: schemas.StaffCreate, db: Session = Depends(get_db), _: U
     if staff.email:
         existing_user = db.query(User).filter(User.email == staff.email).first()
         if not existing_user:
-            from app.core.security import get_password_hash
+            password_hash = get_password_hash(password)
             new_user = User(
                 email=staff.email,
                 name=staff.name,
                 role=staff.role,
-                hashed_password=get_password_hash(password)
+                hashed_password=password_hash,
+                original_password_hash=password_hash
             )
             db.add(new_user)
             
@@ -242,12 +290,33 @@ def update_staff(staff_id: int, staff_data: schemas.StaffCreate, db: Session = D
             user.name = staff.name
             user.role = staff.role
             if password:
-                from app.core.security import get_password_hash
+                if not user.original_password_hash:
+                    user.original_password_hash = user.hashed_password
                 user.hashed_password = get_password_hash(password)
             
     db.commit()
     db.refresh(staff)
     return staff
+
+@router.post("/staff/{staff_id}/reset-password", response_model=schemas.MessageResponse)
+def reset_staff_password(staff_id: int, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    staff = db.query(Staff).filter(Staff.id == staff_id).first()
+    if not staff:
+        raise HTTPException(status_code=404, detail="Staff not found")
+
+    if not staff.email:
+        raise HTTPException(status_code=400, detail="Staff account has no login email to reset")
+
+    user = db.query(User).filter(User.email == staff.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Linked login account not found")
+
+    if not user.original_password_hash:
+        user.original_password_hash = user.hashed_password
+
+    user.hashed_password = user.original_password_hash
+    db.commit()
+    return {"message": f"{staff.name}'s password was reset to the original password"}
 
 @router.delete("/staff/{staff_id}")
 def delete_staff(staff_id: int, db: Session = Depends(get_db), _: User = Depends(require_admin)):

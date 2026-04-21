@@ -7,6 +7,7 @@ const StaffManagement = () => {
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [successMsg, setSuccessMsg] = useState(null);
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,6 +41,7 @@ const StaffManagement = () => {
   };
 
   const handleEditClick = (s) => {
+    setSuccessMsg(null);
     setEditingId(s.id);
     setFormData({
        name: s.name,
@@ -59,7 +61,9 @@ const StaffManagement = () => {
     
     try {
        setLoading(true);
+       setSuccessMsg(null);
        await api.staff.delete(id);
+       setSuccessMsg(`${name}'s account was deleted successfully.`);
        await loadStaff();
     } catch(err) {
        setErrorMsg("Failed to delete staff account.");
@@ -67,15 +71,32 @@ const StaffManagement = () => {
     }
   };
 
+  const handleResetPassword = async (record) => {
+    const confirmed = window.confirm(`Reset ${record.name}'s login back to the original password?`);
+    if (!confirmed) return;
+
+    try {
+      setErrorMsg(null);
+      setSuccessMsg(null);
+      const response = await api.staff.resetPassword(record.id);
+      setSuccessMsg(response.message || `${record.name}'s password was reset successfully.`);
+    } catch (err) {
+      setErrorMsg(err.message || "Failed to reset the staff password.");
+    }
+  };
+
   const handleCreateOrUpdate = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMsg(null);
+    setSuccessMsg(null);
     try {
       if (editingId) {
          await api.staff.update(editingId, formData);
+         setSuccessMsg("Staff account updated successfully.");
       } else {
          await api.staff.create(formData);
+         setSuccessMsg("Staff account created successfully.");
       }
       
       await loadStaff();
@@ -109,6 +130,12 @@ const StaffManagement = () => {
       {errorMsg && (
         <div style={{ padding: '12px 16px', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '6px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '500' }}>
           <AlertCircle size={20} /> {errorMsg}
+        </div>
+      )}
+
+      {successMsg && (
+        <div className="alert alert-success">
+          <Shield size={18} /> {successMsg}
         </div>
       )}
 
@@ -146,8 +173,9 @@ const StaffManagement = () => {
             
             <div className="form-row">
               <div className={`form-group ${editingId ? '' : 'full-width'}`} style={{ maxWidth: editingId ? '50%' : '100%' }}>
-                <label>{editingId ? "Reset Password (Optional)" : "Login Password"}</label>
+                <label>{editingId ? "Set New Password (Optional)" : "Login Password"}</label>
                 <input type="password" placeholder="Enter secure password" required={!editingId} value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} disabled={isSubmitting} />
+                {editingId && <div className="form-hint">Leave blank to keep the current password. Use the reset action in the table to restore the original password.</div>}
               </div>
             
             {editingId && (
@@ -220,6 +248,7 @@ const StaffManagement = () => {
                   </td>
                   <td className="actions-cell">
                     <button className="action-btn edit" onClick={() => handleEditClick(s)} title="Edit Profile"><Edit2 size={16} /></button>
+                    <button className="action-btn view" onClick={() => handleResetPassword(s)} title="Reset to Original Password"><Shield size={16} /></button>
                     <button className="action-btn delete" onClick={() => handleDelete(s.id, s.name)} title="Deactivate Account"><UserMinus size={16} /></button>
                   </td>
                 </tr>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, TrendingUp, TrendingDown, CircleDollarSign, Users, Package, Loader2, AlertCircle, BarChart3 } from 'lucide-react';
+import { Download, TrendingUp, TrendingDown, CircleDollarSign, Users, Package, Loader2, AlertCircle, BarChart3, Clock } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Area, AreaChart } from 'recharts';
 import { api } from '../services/api';
 import '../App.css';
@@ -89,6 +89,7 @@ const SalesMonitoring = () => {
   const activeExpenses = expenses.filter(e => ds[e.date]);
 
   const totalRevenue     = activeSales.reduce((s, r) => s + Number(r.total), 0);
+  const totalBalance     = activeSales.reduce((s, r) => s + (Number(r.balance) || 0), 0);
   const totalExpenseNum  = activeExpenses.reduce((s, r) => s + Number(r.amount), 0);
   const netProfit        = totalRevenue - totalExpenseNum;
   const totalOrders      = activeSales.length;
@@ -138,6 +139,7 @@ const SalesMonitoring = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         {[
           { label: 'Total Revenue',   value: `₱${totalRevenue.toLocaleString('en-PH', {minimumFractionDigits:2})}`, icon: TrendingUp,        bg: 'var(--success-bg)',  color: 'var(--success)' },
+          { label: 'Total Balance (Utang)', value: `₱${totalBalance.toLocaleString('en-PH', {minimumFractionDigits:2})}`, icon: Clock, bg: '#fef3c7', color: '#b45309' },
           { label: 'Total Expenses',  value: `₱${totalExpenseNum.toLocaleString('en-PH', {minimumFractionDigits:2})}`, icon: TrendingDown, bg: 'var(--danger-bg)',   color: 'var(--danger)' },
           { label: 'Net Profit',      value: `₱${netProfit.toLocaleString('en-PH', {minimumFractionDigits:2})}`,      icon: CircleDollarSign, bg: netProfit >= 0 ? 'var(--success-bg)' : 'var(--danger-bg)', color: netProfit >= 0 ? 'var(--success)' : 'var(--danger)' },
           { label: 'Avg. Order',      value: `₱${avgOrderValue.toLocaleString('en-PH', {minimumFractionDigits:2})}`,  icon: Package,          bg: 'var(--warning-bg)', color: 'var(--warning)' },

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Filter, Calendar as CalIcon, Download, Loader2, AlertCircle } from 'lucide-react';
+import { Calendar as CalIcon, Download, Loader2, AlertCircle, Printer } from 'lucide-react';
 import { api } from '../services/api';
 import '../App.css';
 
@@ -24,23 +24,41 @@ const EggProductionRecords = () => {
     }
   };
 
+  const exportCSV = () => {
+    if (!records.length) return;
+    
+    const headers = ['Date', 'J', 'ExL', 'L', 'M', 'S', 'P', 'Total Trays', 'ODD', 'Cracked', 'Reject', 'Remarks'];
+    const rows = records.map(r => {
+      const trays = Math.floor((r.totalGoodEggs || r.eggsCollected || 0) / 30);
+      return [
+        r.date, 
+        r.jumbo || 0, r.extralarge || 0, r.large || 0, r.medium || 0, r.small || 0, r.peewee || 0,
+        trays, r.bunkig || 0, r.cracked || 0, r.reject || 0, `"${r.notes || ''}"`
+      ].join(',');
+    });
+    
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `egg_production_records_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const printPDF = () => {
+    window.print();
+  };
+
   return (
-    <div className="page-container">
+    <div className="page-container" id="printable-area">
       <div className="page-header">
         <h2>Egg Production Records</h2>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button className="btn-secondary"><Filter size={18} /> Filters</button>
-          <button className="btn-secondary"><Download size={18} /> Export CSV</button>
+        <div style={{ display: 'flex', gap: '12px' }} className="no-print">
+          <button className="btn-secondary" onClick={exportCSV}><Download size={18} /> Export CSV</button>
+          <button className="btn-secondary" onClick={printPDF}><Printer size={18} /> Print PDF</button>
         </div>
-      </div>
-
-      <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
-        <input type="date" className="card" style={{ marginBottom: 0, padding: '10px 16px', border: '1px solid var(--border-color)', outline: 'none' }} />
-        <select className="card" style={{ marginBottom: 0, padding: '10px 16px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'white', minWidth: '200px' }}>
-          <option>All Flocks</option>
-          <option>House A</option>
-          <option>House B</option>
-        </select>
       </div>
 
       {errorMsg && (
@@ -55,12 +73,16 @@ const EggProductionRecords = () => {
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Flock Reference ID</th>
-                <th className="text-right">Large (L)</th>
-                <th className="text-right">Medium (M)</th>
-                <th className="text-right">Small (S)</th>
-                <th className="text-right">Total Good Eggs</th>
-                <th className="text-right">Cracked/Reject</th>
+                <th className="text-right">J</th>
+                <th className="text-right">ExL</th>
+                <th className="text-right">L</th>
+                <th className="text-right">M</th>
+                <th className="text-right">S</th>
+                <th className="text-right">P</th>
+                <th className="text-right">Total Trays</th>
+                <th className="text-right">ODD</th>
+                <th className="text-right">Cracked</th>
+                <th className="text-right">Reject</th>
                 <th>Remarks</th>
               </tr>
             </thead>
@@ -80,12 +102,16 @@ const EggProductionRecords = () => {
               ) : records.map(row => (
                 <tr key={row.id}>
                   <td><div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><CalIcon size={14} color="var(--text-muted)"/>{row.date}</div></td>
-                  <td className="font-medium">Flock #{row.flockId}</td>
+                  <td className="text-right">{(row.jumbo || 0).toLocaleString()}</td>
+                  <td className="text-right">{(row.extralarge || 0).toLocaleString()}</td>
                   <td className="text-right">{(row.large || 0).toLocaleString()}</td>
                   <td className="text-right">{(row.medium || 0).toLocaleString()}</td>
                   <td className="text-right">{(row.small || 0).toLocaleString()}</td>
-                  <td className="text-right font-medium" style={{ color: '#16a34a' }}>{(row.totalGoodEggs || row.eggsCollected || 0).toLocaleString()}</td>
-                  <td className="text-right">{(row.cracked || 0) + (row.reject || 0) > 0 ? (row.cracked || 0) + (row.reject || 0) : (row.damagedEggs || 0)}</td>
+                  <td className="text-right">{(row.peewee || 0).toLocaleString()}</td>
+                  <td className="text-right font-medium" style={{ color: '#16a34a' }}>{Math.floor((row.totalGoodEggs || row.eggsCollected || 0) / 30).toLocaleString()}</td>
+                  <td className="text-right">{(row.bunkig || 0).toLocaleString()}</td>
+                  <td className="text-right">{(row.cracked || 0).toLocaleString()}</td>
+                  <td className="text-right">{(row.reject || 0).toLocaleString()}</td>
                   <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{row.notes || '-'}</td>
                 </tr>
               ))}

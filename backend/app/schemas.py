@@ -22,6 +22,13 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
 
+class MessageResponse(BaseModel):
+    message: str
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
 # Flock
 class FlockBase(BaseModel):
     batchId: str
@@ -29,6 +36,7 @@ class FlockBase(BaseModel):
     breed: str
     ageWeeks: int
     quantity: int
+    mortality: Optional[int] = 0
     status: str
 
 class FlockCreate(FlockBase): pass
@@ -44,8 +52,12 @@ class ProductionBase(BaseModel):
     large: Optional[int] = 0
     medium: Optional[int] = 0
     small: Optional[int] = 0
+    jumbo: Optional[int] = 0
+    extralarge: Optional[int] = 0
+    peewee: Optional[int] = 0
     cracked: Optional[int] = 0
     reject: Optional[int] = 0
+    bunkig: Optional[int] = 0
     totalGoodEggs: Optional[int] = 0
     damagedEggs: Optional[int] = 0
     mortality: int
@@ -64,6 +76,9 @@ class InventoryResponse(BaseModel):
     large: int = 0
     medium: int = 0
     small: int = 0
+    jumbo: int = 0
+    extralarge: int = 0
+    peewee: int = 0
     class Config: from_attributes = True
 
 # Sales
@@ -76,7 +91,9 @@ class SaleBase(BaseModel):
     traysSold: int
     pricePerTray: float
     total: float
+    balance: float = 0.0
     status: str
+    staff_incharge: Optional[str] = None
 
 class SaleCreate(SaleBase): pass
 class SaleResponse(SaleBase):

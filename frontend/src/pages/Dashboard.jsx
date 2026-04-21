@@ -99,7 +99,7 @@ const AdminDashboard = ({ data }) => {
           sub={`${rate}% laying rate`} subOk={todaysEggs > 0}
           icon={Activity} iconBg="var(--primary-light)" iconColor="var(--warning)" />
         <StatCard label="Warehouse Stock" value={(inventory.totalSellable || 0).toLocaleString()}
-          sub="pieces ready"
+          sub="Trays"
           icon={Package} iconBg="var(--bg-surface-2)" iconColor="var(--text-muted)" />
         <StatCard label="Total Sales" value={`₱${totalSales.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`}
           sub={`${sales.length} transactions`} subOk={totalSales > 0}
@@ -204,9 +204,13 @@ const AdminDashboard = ({ data }) => {
 ══════════════════════════════════════════════ */
 const StaffDashboard = ({ data }) => {
   const navigate = useNavigate();
-  const { vaccinations, hatchery, inventory } = data;
+  const { vaccinations, hatchery, inventory, sales } = data;
   const upcomingVaccine = vaccinations[0];
   const activeHatch = hatchery.find(h => !h.hatchedCount);
+
+  const today = new Date().toISOString().split('T')[0];
+  const todaySales = sales.filter(s => s.date === today);
+  const todaysSalesAmount = todaySales.reduce((sum, s) => sum + Number(s.total), 0);
 
   const QuickAction = ({ to, icon: Icon, label, accent }) => (
     <button
@@ -267,30 +271,6 @@ const StaffDashboard = ({ data }) => {
           </div>
         )}
 
-        {/* Hatchery */}
-        {activeHatch ? (
-          <div className="card" style={{ borderLeft: '3px solid var(--info)', marginBottom: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-              <Building2 size={18} style={{ color: 'var(--info)' }} />
-              <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>Hatchery Active</span>
-            </div>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-              Batch <strong>{activeHatch.batchCode}</strong> expected hatch: <strong style={{ color: 'var(--info)' }}>{activeHatch.hatchDate}</strong>
-            </p>
-            <button onClick={() => navigate('/hatchery')} className="btn-secondary" style={{ fontSize: '0.8rem', padding: '6px 12px' }}>View Hatchery</button>
-          </div>
-        ) : (
-          <div className="card" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--info-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--info)' }}>
-              <Building2 size={20} />
-            </div>
-            <div>
-              <div style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '0.9rem' }}>No Active Hatchery</div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No eggs incubating</div>
-            </div>
-          </div>
-        )}
-
         {/* Egg Stock */}
         <div className="card" style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)', border: 'none', marginBottom: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
@@ -300,13 +280,26 @@ const StaffDashboard = ({ data }) => {
           <div style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--primary)', lineHeight: 1, marginBottom: '6px' }}>
             {(inventory.totalSellable || 0).toLocaleString()}
           </div>
-          <div style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.35)' }}>pieces ready for dispatch</div>
+          <div style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.35)' }}>Trays ready for dispatch</div>
+        </div>
+
+        {/* Today's Sales */}
+        <div className="card" style={{ background: 'linear-gradient(135deg, #064e3b, #022c22)', border: 'none', marginBottom: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+            <ShoppingCart size={18} style={{ color: 'var(--success)' }} />
+            <span style={{ fontWeight: '700', color: 'rgba(255,255,255,0.8)' }}>Today's Sales</span>
+          </div>
+          <div style={{ fontSize: '2.5rem', fontWeight: '800', color: 'var(--success)', lineHeight: 1, marginBottom: '6px' }}>
+            ₱{todaysSalesAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+          </div>
+          <div style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.35)' }}>{todaySales.length} transactions today</div>
         </div>
       </div>
 
       <h3 style={{ fontSize: '0.9375rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '16px' }}>Quick Actions</h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
         <QuickAction to="/production"        icon={PlusCircle}    label="Log Today's Eggs"   accent="#eab308" />
+        <QuickAction to="/sales"             icon={ShoppingCart}  label="Process Sales"      accent="#10b981" />
         <QuickAction to="/production-records" icon={ClipboardList} label="View Records"        />
         <QuickAction to="/vaccinations"      icon={Syringe}       label="Log Vaccination"     />
         <QuickAction to="/feed"              icon={Activity}      label="Feed Management"     accent="#3b82f6" />

@@ -45,13 +45,16 @@ export const api = {
         localStorage.removeItem('farm_user');
         return null;
       }
-    }
+    },
+    changePassword: (data) => apiClient('/auth/change-password', { method: 'POST', body: JSON.stringify(data) })
   },
 
   // --- Core Farm Modules ---
   flocks: {
     getAll: () => apiClient('/flocks'),
-    create: (data) => apiClient('/flocks', { method: 'POST', body: JSON.stringify(data) })
+    create: (data) => apiClient('/flocks', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id, data) => apiClient(`/flocks/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id) => apiClient(`/flocks/${id}`, { method: 'DELETE' })
   },
   feed: {
     getAll: () => apiClient('/feed'),
@@ -67,7 +70,8 @@ export const api = {
   },
   sales: {
     getAll: () => apiClient('/sales'),
-    create: (data) => apiClient('/sales', { method: 'POST', body: JSON.stringify(data) })
+    create: (data) => apiClient('/sales', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id, data) => apiClient(`/sales/${id}`, { method: 'PUT', body: JSON.stringify(data) })
   },
   income: {
     getAll: () => apiClient('/income'),
@@ -94,6 +98,7 @@ export const api = {
     getAll: () => apiClient('/staff'),
     create: (data) => apiClient('/staff', { method: 'POST', body: JSON.stringify(data) }),
     update: (id, data) => apiClient(`/staff/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    delete: (id) => apiClient(`/staff/${id}`, { method: 'DELETE' })
+    delete: (id) => apiClient(`/staff/${id}`, { method: 'DELETE' }),
+    resetPassword: (id) => apiClient(`/staff/${id}/reset-password`, { method: 'POST' })
   },
 };

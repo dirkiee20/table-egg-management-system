@@ -1,8 +1,10 @@
+from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./farm.db"
+DATABASE_FILE = Path(__file__).resolve().parent.parent / "farm.db"
+SQLALCHEMY_DATABASE_URL = f"sqlite:///{DATABASE_FILE.as_posix()}"
 
 # Setting check_same_thread as False is needed only for SQLite.
 engine = create_engine(

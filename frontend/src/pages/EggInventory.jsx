@@ -32,6 +32,7 @@ const EggInventory = () => {
         ...prodData.map(p => ({
           id: `prod-${p.id}`,
           date: p.date,
+          staffIncharge: '-',
           type: 'IN',
           large: p.large || 0,
           medium: p.medium || 0,
@@ -43,6 +44,7 @@ const EggInventory = () => {
         ...salesData.map(s => ({
           id: `sale-${s.id}`,
           date: s.date,
+          staffIncharge: s.staff_incharge || '-',
           type: 'OUT',
           large: '-',
           medium: '-',
@@ -84,11 +86,11 @@ const EggInventory = () => {
           <div>
             <div className="stat-card__label">Total Sellable Stock</div>
             <div className="stat-card__value" style={{ color: 'var(--primary)' }}>
-              {loading ? <Loader2 className="spin" size={24} /> : (inventory.totalSellable || 0).toLocaleString()}
-              <span style={{ fontSize: '1rem', fontWeight: '400', color: 'var(--text-muted)', marginLeft: '6px' }}>pieces</span>
+              {loading ? <Loader2 className="spin" size={24} /> : Math.floor((inventory.totalSellable || 0) / 30).toLocaleString()}
+              <span style={{ fontSize: '1rem', fontWeight: '400', color: 'var(--text-muted)', marginLeft: '6px' }}>Trays</span>
             </div>
-            <div className="stat-card__sub">
-              L: {inventory.large?.toLocaleString() || 0} &nbsp;|&nbsp; M: {inventory.medium?.toLocaleString() || 0} &nbsp;|&nbsp; S: {inventory.small?.toLocaleString() || 0}
+            <div className="stat-card__sub" style={{ fontSize: '0.8rem' }}>
+              P: {inventory.peewee?.toLocaleString() || 0}, S: {inventory.small?.toLocaleString() || 0}, M: {inventory.medium?.toLocaleString() || 0}, L: {inventory.large?.toLocaleString() || 0}, ExL: {inventory.extralarge?.toLocaleString() || 0}, J: {inventory.jumbo?.toLocaleString() || 0}
             </div>
           </div>
           <div className="stat-card__icon" style={{ background: 'var(--primary-light)', color: 'var(--warning)' }}>
@@ -128,6 +130,7 @@ const EggInventory = () => {
               <thead>
                 <tr>
                   <th>Date</th>
+                  <th>Staff Incharge</th>
                   <th>Movement</th>
                   <th className="text-right">Large</th>
                   <th className="text-right">Medium</th>
@@ -140,6 +143,7 @@ const EggInventory = () => {
                 {ledger.map(row => (
                   <tr key={row.id}>
                     <td>{row.date}</td>
+                    <td>{row.staffIncharge}</td>
                     <td>
                       {row.type === 'IN' ? (
                         <span className="status-badge active" style={{ display: 'inline-flex', gap: '4px', alignItems: 'center' }}>

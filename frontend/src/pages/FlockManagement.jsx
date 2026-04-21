@@ -17,6 +17,7 @@ const FlockManagement = () => {
     breed: 'Lohmann Brown',
     startDate: '',
     hens: '',
+    mortality: 0,
     status: 'Active'
   });
 
@@ -42,18 +43,30 @@ const FlockManagement = () => {
       setFormData({
         name: flock.house,
         breed: flock.breed,
-        startDate: flock.batchId, // Using batchId field proxy for startDate
+        startDate: flock.batchId,
         hens: flock.quantity,
+        mortality: flock.mortality || 0,
         status: flock.status
       });
     } else {
       setEditingId(null);
-      setFormData({ name: '', breed: 'Lohmann Brown', startDate: '', hens: '', status: 'Active' });
+      setFormData({ name: '', breed: 'Lohmann Brown', startDate: '', hens: '', mortality: 0, status: 'Active' });
     }
     setIsModalOpen(true);
   };
 
   const closeForm = () => setIsModalOpen(false);
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this flock?")) {
+      try {
+        await api.flocks.delete(id);
+        await loadFlocks();
+      } catch (err) {
+        setErrorMsg("Failed to delete flock.");
+      }
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -61,15 +74,23 @@ const FlockManagement = () => {
     setErrorMsg(null);
     try {
       if (editingId) {
-        // Mock UI Update, API doesnt support editing natively based on schema
-        // Just reload
+        await api.flocks.update(editingId, {
+          batchId: formData.startDate,
+          house: formData.name,
+          breed: formData.breed,
+          ageWeeks: 0,
+          quantity: Number(formData.hens),
+          mortality: Number(formData.mortality),
+          status: formData.status
+        });
       } else {
         await api.flocks.create({
           batchId: formData.startDate,
           house: formData.name,
           breed: formData.breed,
-          ageWeeks: 0, // Mock computed age
+          ageWeeks: 0,
           quantity: Number(formData.hens),
+          mortality: Number(formData.mortality),
           status: formData.status
         });
       }
@@ -106,6 +127,7 @@ const FlockManagement = () => {
                 <th>Breed</th>
                 <th>Start Date</th>
                 <th>Number of Hens</th>
+                <th>Mortality</th>
                 <th>Status</th>
                 <th className="text-right">Actions</th>
               </tr>
@@ -127,6 +149,7 @@ const FlockManagement = () => {
                   <td>{flock.breed}</td>
                   <td>{flock.batchId}</td>
                   <td>{(flock.quantity || 0).toLocaleString()}</td>
+                  <td>{(flock.mortality || 0).toLocaleString()}</td>
                   <td>
                     <span className={`status-badge ${(flock.status||'').toLowerCase()}`}>
                       {flock.status}
@@ -136,8 +159,8 @@ const FlockManagement = () => {
                     <button className="action-btn edit" onClick={() => openForm(flock)} title="Edit">
                       <Edit2 size={16} />
                     </button>
-                    <button className="action-btn delete" title="Delete Not Supported Yet">
-                      <Trash2 size={16} style={{opacity: 0.3}} />
+                    <button className="action-btn delete" onClick={() => handleDelete(flock.id)} title="Delete">
+                      <Trash2 size={16} />
                     </button>
                   </td>
                 </tr>
@@ -152,7 +175,7 @@ const FlockManagement = () => {
         <div className="modal-overlay" onClick={() => !isSubmitting && closeForm()}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{editingId ? 'View Flock Info (Edit Disabled)' : 'Add New Flock'}</h3>
+              <h3>{editingId ? 'Edit Flock Info' : 'Add New Flock'}</h3>
               <button className="close-btn" onClick={() => !isSubmitting && closeForm()}><X size={20} /></button>
             </div>
 
@@ -165,43 +188,66 @@ const FlockManagement = () => {
             <form onSubmit={handleSubmit} className="standard-form">
               <div className="form-group">
                 <label>Flock Name / House</label>
-                <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. F-03 / House 2" disabled={isSubmitting || editingId} />
+                <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. F-03 / House 2" disabled={isSubmitting} />
               </div>
               
               <div className="form-group">
                 <label>Laying Breed</label>
-                <select value={formData.breed} onChange={e => setFormData({...formData, breed: e.target.value})} disabled={isSubmitting || editingId}>
+                <select value={['Lohmann Brown', 'ISA Brown', 'Hy-Line Brown', 'Dekalb White'].includes(formData.breed) ? formData.breed : 'Other'} onChange={e => {
+                  if (e.target.value === 'Other') {
+                    setFormData({...formData, breed: ''});
+                  } else {
+                    setFormData({...formData, breed: e.target.value});
+                  }
+                }}>
                   <option value="Lohmann Brown">Lohmann Brown</option>
                   <option value="ISA Brown">ISA Brown</option>
                   <option value="Hy-Line Brown">Hy-Line Brown</option>
                   <option value="Dekalb White">Dekalb White</option>
                   <option value="Other">Other</option>
                 </select>
+                {!['Lohmann Brown', 'ISA Brown', 'Hy-Line Brown', 'Dekalb White'].includes(formData.breed) && (
+                  <input style={{marginTop: '8px'}} required type="text" value={formData.breed} onChange={e => setFormData({...formData, breed: e.target.value})} placeholder="Enter Breed" />
+                )}
               </div>
 
               <div className="form-row">
                 <div className="form-group">
                   <label>Placement / Start Date</label>
-                  <input required type="date" value={formData.startDate} onChange={e => setFormData({...formData, startDate: e.target.value})} disabled={isSubmitting || editingId} />
+                  <input required type="date" value={formData.startDate} onChange={e => setFormData({...formData, startDate: e.target.value})} disabled={isSubmitting} />
                 </div>
                 <div className="form-group">
                   <label>Number of Hens</label>
-                  <input required type="number" min="1" value={formData.hens} onChange={e => setFormData({...formData, hens: parseInt(e.target.value) || ''})} placeholder="e.g. 5000" disabled={isSubmitting || editingId} />
+                  <input required type="number" min="0" value={formData.hens} onChange={e => setFormData({...formData, hens: parseInt(e.target.value) || 0})} placeholder="e.g. 5000" disabled={isSubmitting} />
                 </div>
               </div>
 
-              <div className="form-group">
-                <label>Current Status</label>
-                <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} disabled={isSubmitting || editingId}>
-                  <option value="Active">Active</option>
-                  <option value="Depleted">Depleted / Culled</option>
-                </select>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Mortality</label>
+                  <input required type="number" min="0" value={formData.mortality} onChange={e => {
+                    const newMortality = parseInt(e.target.value) || 0;
+                    const diff = newMortality - formData.mortality;
+                    setFormData({
+                      ...formData,
+                      mortality: newMortality,
+                      hens: Math.max(0, formData.hens - diff)
+                    });
+                  }} placeholder="e.g. 10" disabled={isSubmitting} />
+                </div>
+                <div className="form-group">
+                  <label>Current Status</label>
+                  <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} disabled={isSubmitting}>
+                    <option value="Active">Active</option>
+                    <option value="Depleted">Depleted / Culled</option>
+                  </select>
+                </div>
               </div>
 
               <div className="modal-actions">
                 <button type="button" className="btn-secondary" onClick={closeForm}>Cancel</button>
-                <button type="submit" className="btn-primary" style={{color: '#1e293b'}} disabled={isSubmitting || editingId}>
-                  {isSubmitting ? <Loader2 className="spin" size={18} /> : (editingId ? 'Ok' : 'Create Flock')}
+                <button type="submit" className="btn-primary" style={{color: '#1e293b'}} disabled={isSubmitting}>
+                  {isSubmitting ? <Loader2 className="spin" size={18} /> : (editingId ? 'Save Changes' : 'Create Flock')}
                 </button>
               </div>
             </form>

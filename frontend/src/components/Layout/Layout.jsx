@@ -34,15 +34,16 @@ const Layout = ({ children }) => {
   const ALL_NAV_ITEMS = [
     { name: 'Dashboard',                path: '/dashboard',         icon: LayoutDashboard,   section: 'Overview' },
     { name: 'Calendar',                 path: '/calendar',          icon: CalendarDays,      section: 'Overview' },
+    { name: 'Production Report',        path: '/production-report', icon: FileClock,         section: 'Overview' },
     { name: 'Flock Management',         path: '/flocks',            icon: Bird,              section: 'Operations' },
     { name: 'Feed Management',          path: '/feed',              icon: ClipboardList,     section: 'Operations' },
     { name: 'Daily Production',         path: '/production',        icon: ClipboardList,     section: 'Operations' },
     { name: 'Egg Production Records',   path: '/production-records',icon: FileClock,         section: 'Operations' },
     { name: 'Egg Inventory',            path: '/inventory',         icon: Egg,               section: 'Operations' },
     { name: 'Vaccination Records',      path: '/vaccinations',      icon: Syringe,           section: 'Health' },
-    { name: 'Hatchery Records',         path: '/hatchery',          icon: Building2,         section: 'Health' },
     { name: 'Sales',                    path: '/sales',             icon: ShoppingCart,      section: 'Finance' },
     { name: 'Sales & Expense Monitoring', path: '/sales-monitoring',icon: LineChart,         section: 'Finance' },
+    { name: 'Pricing',                  path: '/pricing',           icon: CircleDollarSign,  section: 'Finance' },
     { name: 'Staff Management',         path: '/staff',             icon: Users,             section: 'Admin' },
     { name: 'Expense Management',       path: '/expenses',          icon: Receipt,           section: 'Admin' },
     { name: 'Income Management',        path: '/income',            icon: Wallet,            section: 'Admin' },
@@ -50,11 +51,11 @@ const Layout = ({ children }) => {
 
   let allowedNames = [];
   if (user?.role === ROLES.ADMIN) {
-    allowedNames = ALL_NAV_ITEMS.map(i => i.name);
+    allowedNames = ALL_NAV_ITEMS.filter(i => i.name !== 'Production Report').map(i => i.name);
   } else if (user?.role === ROLES.STAFF) {
     allowedNames = [
-      'Dashboard', 'Calendar', 'Daily Production', 'Egg Production Records',
-      'Egg Inventory', 'Vaccination Records', 'Hatchery Records', 'Feed Management'
+      'Dashboard', 'Calendar', 'Production Report', 'Daily Production', 'Egg Production Records',
+      'Egg Inventory', 'Vaccination Records', 'Feed Management', 'Sales'
     ];
   }
 
@@ -64,7 +65,11 @@ const Layout = ({ children }) => {
   const sections = [...new Set(navItems.map(i => i.section))];
 
   const activeNavItem = ALL_NAV_ITEMS.find(item => location.pathname === item.path);
-  const pageTitle = activeNavItem ? activeNavItem.name : 'Farm Dashboard';
+  const pageTitle = location.pathname === '/account'
+    ? 'My Account'
+    : activeNavItem
+      ? activeNavItem.name
+      : 'Farm Dashboard';
 
   const handleLogout = async () => {
     await logout();
@@ -107,13 +112,19 @@ const Layout = ({ children }) => {
         </nav>
 
         <div className="sidebar-footer">
-          <div className="user-profile">
+          <div className="user-profile" onClick={() => { closeSidebar(); navigate('/account'); }} role="button" tabIndex={0} title="Open My Account" onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              closeSidebar();
+              navigate('/account');
+            }
+          }}>
             <div className="avatar">{user?.name?.charAt(0)?.toUpperCase() || 'U'}</div>
             <div className="user-info">
               <span className="user-name">{user?.name}</span>
               <span className="user-role">{user?.role}</span>
             </div>
-            <button onClick={handleLogout} className="logout-btn" title="Log out">
+            <button onClick={(event) => { event.stopPropagation(); handleLogout(); }} className="logout-btn" title="Log out">
               <LogOut size={16} />
             </button>
           </div>
