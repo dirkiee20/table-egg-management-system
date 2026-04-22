@@ -3,6 +3,19 @@ import { Save, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { api } from '../services/api';
 import '../App.css';
 
+const EGGS_PER_TRAY = 30;
+const SIZE_FIELDS = ['jumbo', 'extralarge', 'large', 'medium', 'small', 'peewee'];
+
+const parseWholeNumber = (value) => {
+  const parsed = Number(value);
+
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return 0;
+  }
+
+  return Math.floor(parsed);
+};
+
 const DailyEggProduction = () => {
   const [formData, setFormData] = useState({
     flockId: '',
@@ -34,10 +47,11 @@ const DailyEggProduction = () => {
     fetchFlocks();
   }, []);
 
-  const totalGood = (Number(formData.jumbo) || 0) + (Number(formData.extralarge) || 0) + (Number(formData.large) || 0) + (Number(formData.medium) || 0) + (Number(formData.small) || 0) + (Number(formData.peewee) || 0);
-  const totalTrays = Math.floor(totalGood / 30);
-  const crackedVal = Number(formData.cracked) || 0;
-  const rejectVal = Number(formData.reject) || 0;
+  const totalTrays = SIZE_FIELDS.reduce((sum, field) => sum + parseWholeNumber(formData[field]), 0);
+  const oddEggs = parseWholeNumber(formData.bunkig);
+  const totalGoodEggs = (totalTrays * EGGS_PER_TRAY) + oddEggs;
+  const crackedVal = parseWholeNumber(formData.cracked);
+  const rejectVal = parseWholeNumber(formData.reject);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,17 +59,18 @@ const DailyEggProduction = () => {
     setSubmitStatus('loading');
 
     try {
+      const sizePayload = SIZE_FIELDS.reduce((payload, field) => {
+        payload[field] = parseWholeNumber(formData[field]) * EGGS_PER_TRAY;
+        return payload;
+      }, {});
+
       await api.production.create({
         date: formData.date,
         flockId: formData.flockId,
-        jumbo: Number(formData.jumbo) || 0,
-        extralarge: Number(formData.extralarge) || 0,
-        large: Number(formData.large) || 0,
-        medium: Number(formData.medium) || 0,
-        small: Number(formData.small) || 0,
-        peewee: Number(formData.peewee) || 0,
-        cracked: Number(formData.cracked) || 0,
-        reject: Number(formData.reject) || 0,
+        ...sizePayload,
+        bunkig: oddEggs,
+        cracked: crackedVal,
+        reject: rejectVal,
         mortality: 0,
         notes: formData.remarks
       });
@@ -83,8 +98,8 @@ const DailyEggProduction = () => {
     }
   };
 
-  const isHighLoss = totalGood > 0 &&
-    ((crackedVal + rejectVal) / totalGood) > 0.05;
+  const isHighLoss = totalGoodEggs > 0 &&
+    ((crackedVal + rejectVal) / totalGoodEggs) > 0.05;
 
   return (
     <div className="page-container">
@@ -136,37 +151,43 @@ const DailyEggProduction = () => {
 
           <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '24px 0' }} />
 
-          <h3 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '16px' }}>Production Grading</h3>
+          <h3 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '6px' }}>Production Grading</h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '16px' }}>
+            Enter full trays for each egg size. Loose eggs that do not complete a tray belong in ODD.
+          </p>
 
           <div className="form-row">
             <div className="form-group">
-              <label>Jumbo (J)</label>
+              <label>Jumbo (J) - Trays</label>
               <input
                 type="number"
                 inputMode="numeric"
                 min="0"
+                step="1"
                 placeholder="0"
                 value={formData.jumbo}
                 onChange={e => setFormData({ ...formData, jumbo: e.target.value })}
               />
             </div>
             <div className="form-group">
-              <label>Extra-Large (ExL)</label>
+              <label>Extra-Large (ExL) - Trays</label>
               <input
                 type="number"
                 inputMode="numeric"
                 min="0"
+                step="1"
                 placeholder="0"
                 value={formData.extralarge}
                 onChange={e => setFormData({ ...formData, extralarge: e.target.value })}
               />
             </div>
             <div className="form-group">
-              <label>Large (L)</label>
+              <label>Large (L) - Trays</label>
               <input
                 type="number"
                 inputMode="numeric"
                 min="0"
+                step="1"
                 placeholder="0"
                 value={formData.large}
                 onChange={e => setFormData({ ...formData, large: e.target.value })}
@@ -176,33 +197,36 @@ const DailyEggProduction = () => {
 
           <div className="form-row">
             <div className="form-group">
-              <label>Medium (M)</label>
+              <label>Medium (M) - Trays</label>
               <input
                 type="number"
                 inputMode="numeric"
                 min="0"
+                step="1"
                 placeholder="0"
                 value={formData.medium}
                 onChange={e => setFormData({ ...formData, medium: e.target.value })}
               />
             </div>
             <div className="form-group">
-              <label>Small (S)</label>
+              <label>Small (S) - Trays</label>
               <input
                 type="number"
                 inputMode="numeric"
                 min="0"
+                step="1"
                 placeholder="0"
                 value={formData.small}
                 onChange={e => setFormData({ ...formData, small: e.target.value })}
               />
             </div>
             <div className="form-group">
-              <label>Peewee (P)</label>
+              <label>Peewee (P) - Trays</label>
               <input
                 type="number"
                 inputMode="numeric"
                 min="0"
+                step="1"
                 placeholder="0"
                 value={formData.peewee}
                 onChange={e => setFormData({ ...formData, peewee: e.target.value })}
@@ -211,7 +235,7 @@ const DailyEggProduction = () => {
           </div>
 
           <div style={{ padding: '16px', backgroundColor: '#f0fdf4', color: '#166534', borderRadius: '6px', marginBottom: '20px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between' }}>
-            <span>Total Eggs: {totalGood}</span>
+            <span>Total Eggs: {totalGoodEggs}</span>
             <span>Total Trays: {totalTrays}</span>
           </div>
 
@@ -219,11 +243,12 @@ const DailyEggProduction = () => {
 
           <div className="form-row">
             <div className="form-group">
-              <label>ODD Stock - Count per egg</label>
+              <label>ODD Stock - Loose eggs</label>
               <input
                 type="number"
                 inputMode="numeric"
                 min="0"
+                step="1"
                 placeholder="0"
                 value={formData.bunkig}
                 onChange={e => setFormData({ ...formData, bunkig: e.target.value })}
@@ -238,6 +263,7 @@ const DailyEggProduction = () => {
                 type="number"
                 inputMode="numeric"
                 min="0"
+                step="1"
                 placeholder="0"
                 value={formData.cracked}
                 onChange={e => setFormData({ ...formData, cracked: e.target.value })}
@@ -250,6 +276,7 @@ const DailyEggProduction = () => {
                 type="number"
                 inputMode="numeric"
                 min="0"
+                step="1"
                 placeholder="0"
                 value={formData.reject}
                 onChange={e => setFormData({ ...formData, reject: e.target.value })}

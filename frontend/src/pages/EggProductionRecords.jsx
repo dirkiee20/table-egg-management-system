@@ -3,6 +3,20 @@ import { Calendar as CalIcon, Download, Loader2, AlertCircle, Printer } from 'lu
 import { api } from '../services/api';
 import '../App.css';
 
+const EGGS_PER_TRAY = 30;
+const SIZE_FIELDS = ['jumbo', 'extralarge', 'large', 'medium', 'small', 'peewee'];
+
+const getTrayCount = (value) => Math.floor((Number(value) || 0) / EGGS_PER_TRAY);
+
+const getRecordTotalTrays = (record) => (
+  SIZE_FIELDS.reduce((sum, field) => sum + getTrayCount(record[field]), 0)
+);
+
+const getRecordOddEggs = (record) => (
+  (Number(record.bunkig) || 0) +
+  SIZE_FIELDS.reduce((sum, field) => sum + ((Number(record[field]) || 0) % EGGS_PER_TRAY), 0)
+);
+
 const EggProductionRecords = () => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,13 +41,13 @@ const EggProductionRecords = () => {
   const exportCSV = () => {
     if (!records.length) return;
     
-    const headers = ['Date', 'J', 'ExL', 'L', 'M', 'S', 'P', 'Total Trays', 'ODD', 'Cracked', 'Reject', 'Remarks'];
+    const headers = ['Date', 'J Trays', 'ExL Trays', 'L Trays', 'M Trays', 'S Trays', 'P Trays', 'Total Trays', 'ODD', 'Cracked', 'Reject', 'Remarks'];
     const rows = records.map(r => {
-      const trays = Math.floor((r.totalGoodEggs || r.eggsCollected || 0) / 30);
+      const trays = getRecordTotalTrays(r);
       return [
         r.date, 
-        r.jumbo || 0, r.extralarge || 0, r.large || 0, r.medium || 0, r.small || 0, r.peewee || 0,
-        trays, r.bunkig || 0, r.cracked || 0, r.reject || 0, `"${r.notes || ''}"`
+        getTrayCount(r.jumbo), getTrayCount(r.extralarge), getTrayCount(r.large), getTrayCount(r.medium), getTrayCount(r.small), getTrayCount(r.peewee),
+        trays, getRecordOddEggs(r), r.cracked || 0, r.reject || 0, `"${r.notes || ''}"`
       ].join(',');
     });
     
@@ -89,27 +103,27 @@ const EggProductionRecords = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="8" style={{ textAlign: 'center', padding: '32px' }}>
+                  <td colSpan="12" style={{ textAlign: 'center', padding: '32px' }}>
                     <Loader2 className="spin" size={24} style={{ margin: '0 auto', color: 'var(--primary)' }} />
                   </td>
                 </tr>
               ) : records.length === 0 ? (
                 <tr>
-                  <td colSpan="8" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
+                  <td colSpan="12" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
                     No egg production records found.
                   </td>
                 </tr>
               ) : records.map(row => (
                 <tr key={row.id}>
                   <td><div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><CalIcon size={14} color="var(--text-muted)"/>{row.date}</div></td>
-                  <td className="text-right">{(row.jumbo || 0).toLocaleString()}</td>
-                  <td className="text-right">{(row.extralarge || 0).toLocaleString()}</td>
-                  <td className="text-right">{(row.large || 0).toLocaleString()}</td>
-                  <td className="text-right">{(row.medium || 0).toLocaleString()}</td>
-                  <td className="text-right">{(row.small || 0).toLocaleString()}</td>
-                  <td className="text-right">{(row.peewee || 0).toLocaleString()}</td>
-                  <td className="text-right font-medium" style={{ color: '#16a34a' }}>{Math.floor((row.totalGoodEggs || row.eggsCollected || 0) / 30).toLocaleString()}</td>
-                  <td className="text-right">{(row.bunkig || 0).toLocaleString()}</td>
+                  <td className="text-right">{getTrayCount(row.jumbo).toLocaleString()}</td>
+                  <td className="text-right">{getTrayCount(row.extralarge).toLocaleString()}</td>
+                  <td className="text-right">{getTrayCount(row.large).toLocaleString()}</td>
+                  <td className="text-right">{getTrayCount(row.medium).toLocaleString()}</td>
+                  <td className="text-right">{getTrayCount(row.small).toLocaleString()}</td>
+                  <td className="text-right">{getTrayCount(row.peewee).toLocaleString()}</td>
+                  <td className="text-right font-medium" style={{ color: '#16a34a' }}>{getRecordTotalTrays(row).toLocaleString()}</td>
+                  <td className="text-right">{getRecordOddEggs(row).toLocaleString()}</td>
                   <td className="text-right">{(row.cracked || 0).toLocaleString()}</td>
                   <td className="text-right">{(row.reject || 0).toLocaleString()}</td>
                   <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{row.notes || '-'}</td>

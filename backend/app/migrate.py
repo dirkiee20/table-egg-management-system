@@ -39,6 +39,7 @@ def run_migrations(db_path: Path | None = None):
     add_column(cursor, "production", "extralarge", "INTEGER", "DEFAULT 0")
     add_column(cursor, "production", "peewee", "INTEGER", "DEFAULT 0")
     add_column(cursor, "production", "bunkig", "INTEGER", "DEFAULT 0")
+    add_column(cursor, "production", "staff_incharge", "VARCHAR")
 
     # Inventory: grading support
     add_column(cursor, "inventory", "large", "INTEGER", "DEFAULT 0")

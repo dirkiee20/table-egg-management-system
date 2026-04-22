@@ -27,6 +27,7 @@ class Production(Base):
     id = Column(Integer, primary_key=True, index=True)
     date = Column(String)
     flockId = Column(String)
+    staff_incharge = Column(String, nullable=True)
     eggsCollected = Column(Integer) # Legacy or total
     large = Column(Integer, default=0)
     medium = Column(Integer, default=0)

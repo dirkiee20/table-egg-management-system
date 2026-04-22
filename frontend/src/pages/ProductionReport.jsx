@@ -4,19 +4,35 @@ import { AlertCircle, CalendarDays, Download, Loader2, Printer } from 'lucide-re
 import { api } from '../services/api';
 import '../App.css';
 
+const EGGS_PER_TRAY = 30;
 const today = format(new Date(), 'yyyy-MM-dd');
 const weekStart = format(startOfWeek(new Date()), 'yyyy-MM-dd');
 
-const buildEggSizesLabel = (record) => (
-  [
-    `J: ${Number(record.jumbo) || 0}`,
-    `ExL: ${Number(record.extralarge) || 0}`,
-    `L: ${Number(record.large) || 0}`,
-    `M: ${Number(record.medium) || 0}`,
-    `S: ${Number(record.small) || 0}`,
-    `P: ${Number(record.peewee) || 0}`
-  ].join(' | ')
+const getTrayCount = (value) => Math.floor((Number(value) || 0) / EGGS_PER_TRAY);
+
+const getOddEggCount = (record) => (
+  (Number(record.bunkig) || 0) +
+  [record.jumbo, record.extralarge, record.large, record.medium, record.small, record.peewee]
+    .reduce((sum, value) => sum + ((Number(value) || 0) % EGGS_PER_TRAY), 0)
 );
+
+const buildEggSizesLabel = (record) => {
+  const details = [
+    `J: ${getTrayCount(record.jumbo)}`,
+    `ExL: ${getTrayCount(record.extralarge)}`,
+    `L: ${getTrayCount(record.large)}`,
+    `M: ${getTrayCount(record.medium)}`,
+    `S: ${getTrayCount(record.small)}`,
+    `P: ${getTrayCount(record.peewee)}`
+  ];
+  const oddEggs = getOddEggCount(record);
+
+  if (oddEggs > 0) {
+    details.push(`ODD: ${oddEggs}`);
+  }
+
+  return details.join(' | ');
+};
 
 const formatFlockReference = (record, flock) => {
   if (!flock) {

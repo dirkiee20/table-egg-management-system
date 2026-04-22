@@ -48,6 +48,7 @@ class FlockResponse(FlockBase):
 class ProductionBase(BaseModel):
     date: str
     flockId: str
+    staff_incharge: Optional[str] = None
     eggsCollected: Optional[int] = 0
     large: Optional[int] = 0
     medium: Optional[int] = 0

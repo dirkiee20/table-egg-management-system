@@ -14,6 +14,11 @@ def require_admin(current_user: User = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Admin access required")
     return current_user
 
+def get_inventory_actor_label(current_user: User) -> str:
+    if current_user.role == "Admin":
+        return "admin"
+    return (current_user.name or "").strip() or "Unknown"
+
 def init_inventory(db: Session):
     inv = db.query(Inventory).first()
     if not inv:
@@ -70,11 +75,20 @@ def get_production(db: Session = Depends(get_db), _: User = Depends(get_current_
     return db.query(Production).all()
 
 @router.post("/production", response_model=schemas.ProductionResponse)
-def create_production(prod: schemas.ProductionCreate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
-    total_good = (prod.jumbo or 0) + (prod.extralarge or 0) + (prod.large or 0) + (prod.medium or 0) + (prod.small or 0) + (prod.peewee or 0)
+def create_production(prod: schemas.ProductionCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    total_good = (
+        (prod.jumbo or 0) +
+        (prod.extralarge or 0) +
+        (prod.large or 0) +
+        (prod.medium or 0) +
+        (prod.small or 0) +
+        (prod.peewee or 0) +
+        (prod.bunkig or 0)
+    )
     prod.totalGoodEggs = total_good
     prod.eggsCollected = total_good
     prod.damagedEggs = (prod.cracked or 0) + (prod.reject or 0)
+    prod.staff_incharge = get_inventory_actor_label(current_user)
 
     new_record = Production(**prod.dict())
     db.add(new_record)
@@ -100,8 +114,11 @@ def get_inventory(db: Session = Depends(get_db), _: User = Depends(get_current_u
 
 # --- SALES ---
 @router.get("/sales", response_model=list[schemas.SaleResponse])
-def get_sales(db: Session = Depends(get_db), _: User = Depends(get_current_user)):
-    return db.query(Sale).all()
+def get_sales(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    query = db.query(Sale)
+    if current_user.role != "Admin":
+        query = query.filter(Sale.staff_incharge == get_inventory_actor_label(current_user))
+    return query.all()
 
 @router.post("/sales", response_model=schemas.SaleResponse)
 def create_sale(sale: schemas.SaleCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -118,7 +135,7 @@ def create_sale(sale: schemas.SaleCreate, db: Session = Depends(get_db), current
 
     # 2. Record Sale
     new_sale = Sale(**sale.dict())
-    new_sale.staff_incharge = current_user.name
+    new_sale.staff_incharge = get_inventory_actor_label(current_user)
     db.add(new_sale)
     db.flush() # Commit sale temporarily to grab ID
     
@@ -144,9 +161,14 @@ def update_sale(sale_id: int, sale: schemas.SaleCreate, db: Session = Depends(ge
     existing_sale = db.query(Sale).filter(Sale.id == sale_id).first()
     if not existing_sale:
         raise HTTPException(status_code=404, detail="Sale not found")
+
+    if current_user.role != "Admin" and existing_sale.staff_incharge != get_inventory_actor_label(current_user):
+        raise HTTPException(status_code=403, detail="You can only update your own transactions")
         
     for key, value in sale.dict().items():
         setattr(existing_sale, key, value)
+    if not existing_sale.staff_incharge:
+        existing_sale.staff_incharge = get_inventory_actor_label(current_user)
         
     db.commit()
     db.refresh(existing_sale)

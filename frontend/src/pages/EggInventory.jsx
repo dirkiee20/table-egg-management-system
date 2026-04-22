@@ -32,7 +32,7 @@ const EggInventory = () => {
         ...prodData.map(p => ({
           id: `prod-${p.id}`,
           date: p.date,
-          staffIncharge: '-',
+          staffIncharge: p.staff_incharge || '-',
           type: 'IN',
           large: p.large || 0,
           medium: p.medium || 0,

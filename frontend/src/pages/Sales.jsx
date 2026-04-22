@@ -3,6 +3,17 @@ import { FileText, CheckCircle2, CircleDollarSign, PlusCircle, Trash2, X, Loader
 import { api } from '../services/api';
 import '../App.css';
 
+const DEFAULT_PRICING = {
+  Jumbo: 300,
+  'Extra-Large': 285,
+  Large: 270,
+  Medium: 255,
+  Small: 240,
+  Peewee: 225
+};
+
+const SALE_GRADES = ['Jumbo', 'Extra-Large', 'Large', 'Medium', 'Small', 'Peewee'];
+
 const Sales = () => {
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,14 +30,12 @@ const Sales = () => {
   const [amountPaid, setAmountPaid] = useState('');
   const [discount, setDiscount] = useState(0);
   const [lineItems, setLineItems] = useState([
-    { id: 1, grade: 'Large', quantity: 10, price: 270.00 }
+    { id: 1, grade: 'Large', quantity: 10, price: DEFAULT_PRICING.Large }
   ]);
   const [editingId, setEditingId] = useState(null);
 
   // Pricing from local storage
-  const [pricing, setPricing] = useState({
-    Jumbo: 300, 'Extra-Large': 285, Large: 270, Medium: 255, Small: 240, Peewee: 225
-  });
+  const [pricing, setPricing] = useState(DEFAULT_PRICING);
 
   useEffect(() => {
     const saved = localStorage.getItem('egg_pricing');
@@ -40,6 +49,8 @@ const Sales = () => {
   useEffect(() => {
     loadSales();
   }, []);
+
+  const getPriceForGrade = (grade) => pricing[grade] || DEFAULT_PRICING[grade] || 0;
 
   const loadSales = async () => {
     try {
@@ -55,7 +66,7 @@ const Sales = () => {
   };
 
   const addLineItem = () => {
-    setLineItems([...lineItems, { id: Date.now(), grade: 'Medium', quantity: 1, price: 140.00 }]);
+    setLineItems([...lineItems, { id: Date.now(), grade: 'Medium', quantity: 1, price: getPriceForGrade('Medium') }]);
   };
 
   const removeLineItem = (id) => {
@@ -69,7 +80,7 @@ const Sales = () => {
       if (item.id === id) {
         const updated = { ...item, [field]: value };
         if (field === 'grade') {
-          updated.price = pricing[value] || 0;
+          updated.price = getPriceForGrade(value);
         }
         return updated;
       }
@@ -132,7 +143,7 @@ const Sales = () => {
       setDiscount(0);
       setAmountPaid('');
       setEditingId(null);
-      setLineItems([{ id: Date.now(), grade: 'Large', quantity: 10, price: pricing['Large'] || 270.00 }]);
+      setLineItems([{ id: Date.now(), grade: 'Large', quantity: 10, price: getPriceForGrade('Large') }]);
     } catch (err) {
       console.error("Sale failed:", err);
       // Surface backend validation errors (like insufficient inventory)
@@ -160,7 +171,7 @@ const Sales = () => {
       setAddress('');
       setDiscount(0);
       setAmountPaid('');
-      setLineItems([{ id: Date.now(), grade: 'Large', quantity: 1, price: pricing['Large'] || 270.00 }]);
+      setLineItems([{ id: Date.now(), grade: 'Large', quantity: 1, price: getPriceForGrade('Large') }]);
     }
     setIsModalOpen(true);
   };
@@ -193,19 +204,20 @@ const Sales = () => {
                 <th className="text-right">Total (₱)</th>
                 <th className="text-right">Balance</th>
                 <th>Payment Status</th>
+                <th>Staff Incharge</th>
                 <th className="text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="9" style={{ textAlign: 'center', padding: '32px' }}>
+                  <td colSpan="11" style={{ textAlign: 'center', padding: '32px' }}>
                     <Loader2 className="spin" size={24} style={{ margin: '0 auto', color: 'var(--primary)' }} />
                   </td>
                 </tr>
               ) : sales.length === 0 ? (
                 <tr>
-                  <td colSpan="9" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
+                  <td colSpan="11" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
                     No sales recorded yet.
                   </td>
                 </tr>
@@ -230,6 +242,7 @@ const Sales = () => {
                       <span className="badge badge-error">UNPAID</span>
                     )}
                   </td>
+                  <td className="text-muted">{sale.staff_incharge || '-'}</td>
                   <td className="actions-cell">
                     <button className="action-btn edit" onClick={() => openForm(sale)} title="Edit Sale">
                       <FileText size={16} />
@@ -287,9 +300,10 @@ const Sales = () => {
                     <div className="form-group" style={{ flex: 2, marginBottom: 0 }}>
                       <label style={{ fontSize: '0.75rem' }}>Select Size</label>
                       <select value={item.grade} onChange={e => updateLineItem(item.id, 'grade', e.target.value)} disabled={isSubmitting}>
-                        <option value="Large">Large</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Small">Small</option>
+                        {item.grade === 'Mixed' && <option value="Mixed">Mixed</option>}
+                        {SALE_GRADES.map((grade) => (
+                          <option key={grade} value={grade}>{grade}</option>
+                        ))}
                       </select>
                     </div>
                     
