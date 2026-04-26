@@ -67,6 +67,7 @@ class ProductionBase(BaseModel):
 class ProductionCreate(ProductionBase): pass
 class ProductionResponse(ProductionBase):
     id: int
+    createdAt: Optional[datetime] = None
     class Config: from_attributes = True
 
 # Inventory
@@ -90,6 +91,12 @@ class SaleBase(BaseModel):
     address: Optional[str] = None
     date: str
     traysSold: int
+    jumbo: Optional[int] = 0
+    extralarge: Optional[int] = 0
+    large: Optional[int] = 0
+    medium: Optional[int] = 0
+    small: Optional[int] = 0
+    peewee: Optional[int] = 0
     pricePerTray: float
     total: float
     balance: float = 0.0
@@ -99,6 +106,7 @@ class SaleBase(BaseModel):
 class SaleCreate(SaleBase): pass
 class SaleResponse(SaleBase):
     id: int
+    createdAt: Optional[datetime] = None
     class Config: from_attributes = True
 
 # Income
@@ -151,6 +159,7 @@ class VaccinationBase(BaseModel):
     dateAdministered: str
     nextDueDate: Optional[str] = None
     administeredBy: Optional[str] = None
+    status: Optional[str] = "Pending"
     notes: Optional[str] = None
 
 class VaccinationCreate(VaccinationBase): pass

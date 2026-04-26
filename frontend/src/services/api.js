@@ -88,7 +88,8 @@ export const api = {
   },
   vaccinations: {
     getAll: () => apiClient('/vaccinations'),
-    create: (data) => apiClient('/vaccinations', { method: 'POST', body: JSON.stringify(data) })
+    create: (data) => apiClient('/vaccinations', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id, data) => apiClient(`/vaccinations/${id}`, { method: 'PUT', body: JSON.stringify(data) })
   },
   hatchery: {
     getAll: () => apiClient('/hatchery'),

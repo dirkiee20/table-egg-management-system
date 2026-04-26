@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, AlertCircle, CheckCircle2, Filter, Loader2, LineChart } from 'lucide-react';
+import { Save, AlertCircle, CheckCircle2, Filter, Loader2, LineChart, X } from 'lucide-react';
 import { api } from '../services/api';
 import '../App.css';
 import { LineChart as RechartsLine, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -19,6 +19,7 @@ const FeedManagement = () => {
   const [loading, setLoading] = useState(true);
   const [loadingForecast, setLoadingForecast] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [dateRange, setDateRange] = useState({ from: '', to: '' });
 
   useEffect(() => {
     fetchData();
@@ -38,7 +39,7 @@ const FeedManagement = () => {
         api.feed.getAll()
       ]);
       setFlocks(flocksRes.filter(f => f.status === 'Active'));
-      setFeedRecords(feedRes.reverse());
+      setFeedRecords([...feedRes].sort((a, b) => new Date(b.date) - new Date(a.date)));
     } catch (err) {
       console.error(err);
       setErrorMsg("Failed to load feed management data.");
@@ -90,6 +91,26 @@ const FeedManagement = () => {
          name: `Day ${idx + 1}`,
          feed: val
      }));
+  };
+
+  const filteredFeedRecords = feedRecords.filter(record => {
+    const recordDate = record.date || '';
+
+    if (dateRange.from && recordDate < dateRange.from) {
+      return false;
+    }
+
+    if (dateRange.to && recordDate > dateRange.to) {
+      return false;
+    }
+
+    return true;
+  });
+
+  const hasDateRange = Boolean(dateRange.from || dateRange.to);
+
+  const clearDateRange = () => {
+    setDateRange({ from: '', to: '' });
   };
 
   return (
@@ -183,9 +204,38 @@ const FeedManagement = () => {
       </div>
 
       <div className="card" style={{ marginTop: '24px' }}>
-         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
             <h3 style={{ fontSize: '1.125rem', color: 'var(--text-main)' }}>Historical Records</h3>
-            <button className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.875rem' }}><Filter size={16}/> Filter</button>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', flexWrap: 'wrap' }}>
+              <div className="form-group" style={{ marginBottom: 0, minWidth: '150px' }}>
+                <label style={{ fontSize: '0.75rem' }}>From</label>
+                <input
+                  type="date"
+                  value={dateRange.from}
+                  max={dateRange.to || undefined}
+                  onChange={e => setDateRange(prev => ({ ...prev, from: e.target.value }))}
+                  style={{ padding: '6px 10px' }}
+                />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0, minWidth: '150px' }}>
+                <label style={{ fontSize: '0.75rem' }}>To</label>
+                <input
+                  type="date"
+                  value={dateRange.to}
+                  min={dateRange.from || undefined}
+                  onChange={e => setDateRange(prev => ({ ...prev, to: e.target.value }))}
+                  style={{ padding: '6px 10px' }}
+                />
+              </div>
+              <span className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.875rem', cursor: 'default' }}>
+                <Filter size={16}/> {filteredFeedRecords.length} shown
+              </span>
+              {hasDateRange && (
+                <button type="button" className="btn-secondary" onClick={clearDateRange} style={{ padding: '6px 10px', fontSize: '0.875rem' }} title="Clear date range">
+                  <X size={16} />
+                </button>
+              )}
+            </div>
          </div>
 
          <div className="table-responsive">
@@ -210,7 +260,13 @@ const FeedManagement = () => {
                      No feed consumption records found.
                    </td>
                  </tr>
-               ) : feedRecords.map(row => (
+               ) : filteredFeedRecords.length === 0 ? (
+                 <tr>
+                   <td colSpan="3" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
+                     No feed records match the selected date range.
+                   </td>
+                 </tr>
+               ) : filteredFeedRecords.map(row => (
                  <tr key={row.id}>
                    <td>{row.date}</td>
                    <td className="font-medium">Flock #{row.flockId}</td>

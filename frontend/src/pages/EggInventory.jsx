@@ -3,6 +3,19 @@ import { Package, ArrowDownLeft, ArrowUpRight, AlertTriangle, Loader2, AlertCirc
 import { api } from '../services/api';
 import '../App.css';
 
+const EGGS_PER_TRAY = 30;
+const SIZE_COLUMNS = [
+  { key: 'jumbo', label: 'Jumbo' },
+  { key: 'extralarge', label: 'XL' },
+  { key: 'large', label: 'Large' },
+  { key: 'medium', label: 'Medium' },
+  { key: 'small', label: 'Small' },
+  { key: 'peewee', label: 'Peewee' }
+];
+
+const toTrayCount = (eggs = 0) => Math.floor((Number(eggs) || 0) / EGGS_PER_TRAY);
+const getSortTime = (row) => new Date(row.actionAt || row.date || 0).getTime() || 0;
+
 const EggInventory = () => {
   const [inventory, setInventory] = useState({ totalSellable: 0, totalDamaged: 0 });
   const [ledger, setLedger] = useState([]);
@@ -32,31 +45,44 @@ const EggInventory = () => {
         ...prodData.map(p => ({
           id: `prod-${p.id}`,
           date: p.date,
+          actionAt: p.createdAt,
+          sortId: p.id,
           staffIncharge: p.staff_incharge || '-',
           type: 'IN',
-          large: p.large || 0,
-          medium: p.medium || 0,
-          small: p.small || 0,
-          quantity: p.eggsCollected,
-          unit: 'Eggs',
+          jumbo: toTrayCount(p.jumbo),
+          extralarge: toTrayCount(p.extralarge),
+          large: toTrayCount(p.large),
+          medium: toTrayCount(p.medium),
+          small: toTrayCount(p.small),
+          peewee: toTrayCount(p.peewee),
+          quantity: toTrayCount(p.eggsCollected),
+          unit: 'Trays',
           reference: `Daily Prod (Flock ${p.flockId})`
         })),
         ...salesData.map(s => ({
           id: `sale-${s.id}`,
           date: s.date,
+          actionAt: s.createdAt,
+          sortId: s.id,
           staffIncharge: s.staff_incharge || '-',
           type: 'OUT',
-          large: '-',
-          medium: '-',
-          small: '-',
+          jumbo: s.jumbo || 0,
+          extralarge: s.extralarge || 0,
+          large: s.large || 0,
+          medium: s.medium || 0,
+          small: s.small || 0,
+          peewee: s.peewee || 0,
           quantity: s.traysSold,
           unit: 'Trays',
-          reference: `Sale (${s.customer})`
+          reference: `Sale (${s.customer_name || s.customer || 'Walk-in Customer'})`
         }))
       ];
 
-      // Sort chronological descending
-      consolidatedLedger.sort((a, b) => new Date(b.date) - new Date(a.date));
+      consolidatedLedger.sort((a, b) => {
+        const timeDiff = getSortTime(b) - getSortTime(a);
+        if (timeDiff !== 0) return timeDiff;
+        return (b.sortId || 0) - (a.sortId || 0);
+      });
       setLedger(consolidatedLedger);
 
     } catch (err) {
@@ -90,7 +116,7 @@ const EggInventory = () => {
               <span style={{ fontSize: '1rem', fontWeight: '400', color: 'var(--text-muted)', marginLeft: '6px' }}>Trays</span>
             </div>
             <div className="stat-card__sub" style={{ fontSize: '0.8rem' }}>
-              P: {inventory.peewee?.toLocaleString() || 0}, S: {inventory.small?.toLocaleString() || 0}, M: {inventory.medium?.toLocaleString() || 0}, L: {inventory.large?.toLocaleString() || 0}, ExL: {inventory.extralarge?.toLocaleString() || 0}, J: {inventory.jumbo?.toLocaleString() || 0}
+              J: {toTrayCount(inventory.jumbo).toLocaleString()}, XL: {toTrayCount(inventory.extralarge).toLocaleString()}, L: {toTrayCount(inventory.large).toLocaleString()}, M: {toTrayCount(inventory.medium).toLocaleString()}, S: {toTrayCount(inventory.small).toLocaleString()}, P: {toTrayCount(inventory.peewee).toLocaleString()} trays
             </div>
           </div>
           <div className="stat-card__icon" style={{ background: 'var(--primary-light)', color: 'var(--warning)' }}>
@@ -132,9 +158,9 @@ const EggInventory = () => {
                   <th>Date</th>
                   <th>Staff Incharge</th>
                   <th>Movement</th>
-                  <th className="text-right">Large</th>
-                  <th className="text-right">Medium</th>
-                  <th className="text-right">Small</th>
+                  {SIZE_COLUMNS.map(size => (
+                    <th key={size.key} className="text-right">{size.label}</th>
+                  ))}
                   <th className="text-right">Total Quantity</th>
                   <th>Source / Reference</th>
                 </tr>
@@ -155,9 +181,11 @@ const EggInventory = () => {
                         </span>
                       )}
                     </td>
-                    <td className="text-right font-medium text-muted">{row.large}</td>
-                    <td className="text-right font-medium text-muted">{row.medium}</td>
-                    <td className="text-right font-medium text-muted">{row.small}</td>
+                    {SIZE_COLUMNS.map(size => (
+                      <td key={size.key} className="text-right font-medium text-muted">
+                        {(row[size.key] || 0).toLocaleString()}
+                      </td>
+                    ))}
                     <td className="text-right font-medium">
                       {row.type === 'IN' ? '+' : '-'}{row.quantity} {row.unit}
                     </td>

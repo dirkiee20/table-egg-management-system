@@ -55,6 +55,16 @@ def run_migrations(db_path: Path | None = None):
     add_column(cursor, "sales", "address", "VARCHAR")
     add_column(cursor, "sales", "balance", "FLOAT", "DEFAULT 0.0")
     add_column(cursor, "sales", "staff_incharge", "VARCHAR")
+    add_column(cursor, "sales", "jumbo", "INTEGER", "DEFAULT 0")
+    add_column(cursor, "sales", "extralarge", "INTEGER", "DEFAULT 0")
+    add_column(cursor, "sales", "large", "INTEGER", "DEFAULT 0")
+    add_column(cursor, "sales", "medium", "INTEGER", "DEFAULT 0")
+    add_column(cursor, "sales", "small", "INTEGER", "DEFAULT 0")
+    add_column(cursor, "sales", "peewee", "INTEGER", "DEFAULT 0")
+
+    # Vaccinations: manual completion tracking and staff ownership
+    add_column(cursor, "vaccinations", "status", "VARCHAR", "DEFAULT 'Pending'")
+    add_column(cursor, "vaccinations", "administeredBy", "VARCHAR")
 
     try:
         cursor.execute("UPDATE sales SET customer_name = customer WHERE customer_name IS NULL OR customer_name = ''")

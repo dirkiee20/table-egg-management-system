@@ -1,19 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { Syringe, Plus, Info, Share2, Loader2, AlertCircle } from 'lucide-react';
+import { Syringe, Plus, Info, Loader2, AlertCircle, Edit2 } from 'lucide-react';
 import { api } from '../services/api';
+import { useAuth, ROLES } from '../context/AuthContext';
 import '../App.css';
 
+const getStatusBadgeStyle = (status) => {
+  if (status === 'Complete') {
+    return { backgroundColor: '#dcfce7', color: '#166534' };
+  }
+
+  return { backgroundColor: '#fef3c7', color: '#b45309' };
+};
+
 const VaccinationRecords = () => {
+  const { user } = useAuth();
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   // Form State
   const [flock, setFlock] = useState('');
   const [vaccine, setVaccine] = useState('');
   const [dateGiven, setDateGiven] = useState(new Date().toISOString().split('T')[0]);
   const [nextDue, setNextDue] = useState('');
+  const [status, setStatus] = useState('Pending');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -41,32 +53,67 @@ const VaccinationRecords = () => {
     }
   };
 
-  const handleCreate = async (e) => {
+  const openCreateForm = () => {
+    resetForm();
+    setEditingId(null);
+    setError(null);
+    setIsFormOpen(true);
+  };
+
+  const openEditForm = (record) => {
+    setEditingId(record.id);
+    setFlock(record.batchId || '');
+    setVaccine(record.vaccineName || '');
+    setDateGiven(record.dateAdministered || new Date().toISOString().split('T')[0]);
+    setNextDue(record.nextDueDate || '');
+    setStatus(record.status || 'Pending');
+    setNotes(record.notes || '');
+    setError(null);
+    setIsFormOpen(true);
+  };
+
+  const closeForm = () => {
+    setIsFormOpen(false);
+    setEditingId(null);
+    resetForm();
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       setSubmitting(true);
-      await api.vaccinations.create({
+      const payload = {
         batchId: flock,
         vaccineName: vaccine,
         dateAdministered: dateGiven,
         nextDueDate: nextDue || null,
         notes: notes,
-        administeredBy: 'STF-001' // Mock Current User
-      });
+        status: editingId ? status : 'Pending'
+      };
+
+      if (editingId) {
+        await api.vaccinations.update(editingId, payload);
+      } else {
+        await api.vaccinations.create(payload);
+      }
+
       setIsFormOpen(false);
       resetForm();
+      setEditingId(null);
       await loadRecords(); // Refresh list
     } catch (err) {
-      setError('Failed to create vaccination record.');
+      setError(`Failed to ${editingId ? 'update' : 'create'} vaccination record.`);
     } finally {
       setSubmitting(false);
     }
   };
 
   const resetForm = () => {
-    setFlock(''); setVaccine(''); setNextDue(''); setNotes('');
+    setFlock(''); setVaccine(''); setNextDue(''); setStatus('Pending'); setNotes('');
     setDateGiven(new Date().toISOString().split('T')[0]);
   };
+
+  const isAdmin = user?.role === ROLES.ADMIN;
 
   return (
     <div className="page-container">
@@ -75,7 +122,7 @@ const VaccinationRecords = () => {
           <h2>Vaccination Records</h2>
           <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Track immunity and medication logs</span>
         </div>
-        <button className="btn-primary" onClick={() => setIsFormOpen(!isFormOpen)}>
+        <button className="btn-primary" onClick={() => isFormOpen ? closeForm() : openCreateForm()}>
           {isFormOpen ? 'Close Form' : <><Plus size={18} /> Log Vaccination</>}
         </button>
       </div>
@@ -89,9 +136,9 @@ const VaccinationRecords = () => {
       {isFormOpen && (
         <div className="card" style={{ borderLeft: '4px solid var(--primary)', marginBottom: '32px' }}>
           <h3 style={{ fontSize: '1.125rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Syringe size={20} color="var(--primary)" /> New Medical Record
+            <Syringe size={20} color="var(--primary)" /> {editingId ? 'Edit Medical Record' : 'New Medical Record'}
           </h3>
-          <form className="standard-form" style={{ padding: 0 }} onSubmit={handleCreate}>
+          <form className="standard-form" style={{ padding: 0 }} onSubmit={handleSubmit}>
             <div className="form-row">
               <div className="form-group">
                 <label>Target Flock</label>
@@ -126,15 +173,27 @@ const VaccinationRecords = () => {
               </div>
             </div>
 
+            {editingId && (
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Status</label>
+                  <select required value={status} onChange={e => setStatus(e.target.value)}>
+                    <option value="Pending">Pending</option>
+                    <option value="Complete">Complete</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
             <div className="form-group">
               <label>Field Notes / Observations</label>
               <textarea rows="2" placeholder="e.g. Added vitamin C to water mix." value={notes} onChange={e => setNotes(e.target.value)}></textarea>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', gap: '8px' }}>
-              <button type="button" className="btn-secondary" onClick={() => setIsFormOpen(false)}>Cancel</button>
+              <button type="button" className="btn-secondary" onClick={closeForm}>Cancel</button>
               <button type="submit" className="btn-primary" disabled={submitting}>
-                {submitting ? <><Loader2 className="spin" size={18}/> Saving...</> : 'Save Record'}
+                {submitting ? <><Loader2 className="spin" size={18}/> Saving...</> : (editingId ? 'Save Changes' : 'Save Record')}
               </button>
             </div>
           </form>
@@ -167,7 +226,10 @@ const VaccinationRecords = () => {
                   <th>Flock / Batch</th>
                   <th>Vaccine Administered</th>
                   <th>Notes</th>
+                  <th>Status</th>
                   <th>Next Due</th>
+                  {isAdmin && <th>Incharge</th>}
+                  <th className="text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -178,11 +240,22 @@ const VaccinationRecords = () => {
                     <td>{rec.vaccineName}</td>
                     <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{rec.notes || '-'}</td>
                     <td>
+                      <span className="status-badge" style={getStatusBadgeStyle(rec.status || 'Pending')}>
+                        {rec.status || 'Pending'}
+                      </span>
+                    </td>
+                    <td>
                       {rec.nextDueDate ? (
                         <span className="status-badge" style={{ backgroundColor: '#fee2e2', color: '#b91c1c' }}>{rec.nextDueDate}</span>
                       ) : (
                         <span style={{ color: 'var(--text-muted)' }}>N/A</span>
                       )}
+                    </td>
+                    {isAdmin && <td className="text-muted">{rec.administeredBy || '-'}</td>}
+                    <td className="actions-cell">
+                      <button className="action-btn edit" onClick={() => openEditForm(rec)} title="Edit Record">
+                        <Edit2 size={16} />
+                      </button>
                     </td>
                   </tr>
                 ))}

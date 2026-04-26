@@ -7,6 +7,12 @@ import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, Loader2, Ale
 import { api } from '../services/api';
 import '../App.css';
 
+const normalizeEventStatus = (status) => status === 'In Progress' ? 'Pending' : (status || 'Pending');
+const getStatusSelectStyle = (status) => ({
+  color: status === 'Completed' ? '#166534' : 'var(--text-main)',
+  fontWeight: status === 'Completed' ? 700 : 500
+});
+
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date('2026-04-02'));
   const [events, setEvents] = useState([]);
@@ -53,7 +59,7 @@ const Calendar = () => {
       type: ev.type || 'general',
       time: ev.time || '',
       description: ev.description || '',
-      status: ev.status || 'Pending'
+      status: normalizeEventStatus(ev.status)
     });
     setIsModalOpen(true);
     setSuccessMsg(null);
@@ -151,6 +157,12 @@ const Calendar = () => {
                     bgColor = '#dbeafe'; textColor = '#1d4ed8'; borderColor = '#93c5fd';
                   } else {
                     bgColor = '#fef9c3'; textColor = '#a16207'; borderColor = '#fde047';
+                  }
+
+                  if (ev.status === 'Completed') {
+                    bgColor = '#dcfce7';
+                    textColor = '#166534';
+                    borderColor = '#22c55e';
                   }
 
                   return (
@@ -304,10 +316,15 @@ const Calendar = () => {
                 </div>
                 <div className="form-group">
                   <label>Status</label>
-                  <select required value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} disabled={isSubmitting}>
+                  <select
+                    required
+                    value={formData.status}
+                    onChange={e => setFormData({...formData, status: e.target.value})}
+                    disabled={isSubmitting}
+                    style={getStatusSelectStyle(formData.status)}
+                  >
                     <option value="Pending">Pending</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Completed">Completed</option>
+                    <option value="Completed" style={{ color: '#166534', fontWeight: 700 }}>Completed</option>
                   </select>
                 </div>
               </div>

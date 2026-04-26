@@ -7,6 +7,8 @@ from app.routers.auth import get_current_user
 from app.core.security import get_password_hash
 
 router = APIRouter()
+EGGS_PER_TRAY = 30
+EGG_SIZE_FIELDS = ("jumbo", "extralarge", "large", "medium", "small", "peewee")
 
 # Dependency to check admin access
 def require_admin(current_user: User = Depends(get_current_user)):
@@ -22,10 +24,13 @@ def get_inventory_actor_label(current_user: User) -> str:
 def init_inventory(db: Session):
     inv = db.query(Inventory).first()
     if not inv:
-        inv = Inventory(totalSellable=0, totalDamaged=0, large=0, medium=0, small=0)
+        inv = Inventory(totalSellable=0, totalDamaged=0, jumbo=0, extralarge=0, large=0, medium=0, small=0, peewee=0)
         db.add(inv)
         db.commit()
     return inv
+
+def get_sale_size_trays(sale: schemas.SaleCreate) -> dict[str, int]:
+    return {field: max(0, int(getattr(sale, field) or 0)) for field in EGG_SIZE_FIELDS}
 
 # --- FLOCKS ---
 @router.get("/flocks", response_model=list[schemas.FlockResponse])
@@ -118,7 +123,7 @@ def get_sales(db: Session = Depends(get_db), current_user: User = Depends(get_cu
     query = db.query(Sale)
     if current_user.role != "Admin":
         query = query.filter(Sale.staff_incharge == get_inventory_actor_label(current_user))
-    return query.all()
+    return query.order_by(Sale.createdAt.desc(), Sale.id.desc()).all()
 
 @router.post("/sales", response_model=schemas.SaleResponse)
 def create_sale(sale: schemas.SaleCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -127,11 +132,24 @@ def create_sale(sale: schemas.SaleCreate, db: Session = Depends(get_db), current
     elif sale.customer_name and not sale.customer:
         sale.customer = sale.customer_name
 
+    size_trays = get_sale_size_trays(sale)
+    size_tray_total = sum(size_trays.values())
+    if size_tray_total:
+        sale.traysSold = size_tray_total
+
+    eggs_to_deduct = sale.traysSold * EGGS_PER_TRAY
+
     # 1. Deduct Inventory (Business Logic)
     inv = init_inventory(db)
-    if inv.totalSellable < sale.traysSold:
+    if inv.totalSellable < eggs_to_deduct:
         raise HTTPException(status_code=400, detail="Insufficient inventory trays")
-    inv.totalSellable -= sale.traysSold
+    if size_tray_total:
+        for field, trays in size_trays.items():
+            eggs = trays * EGGS_PER_TRAY
+            if getattr(inv, field, 0) < eggs:
+                raise HTTPException(status_code=400, detail=f"Insufficient {field.replace('extralarge', 'extra-large')} trays")
+            setattr(inv, field, getattr(inv, field, 0) - eggs)
+    inv.totalSellable -= eggs_to_deduct
 
     # 2. Record Sale
     new_sale = Sale(**sale.dict())
@@ -164,6 +182,15 @@ def update_sale(sale_id: int, sale: schemas.SaleCreate, db: Session = Depends(ge
 
     if current_user.role != "Admin" and existing_sale.staff_incharge != get_inventory_actor_label(current_user):
         raise HTTPException(status_code=403, detail="You can only update your own transactions")
+
+    if sale.customer and not sale.customer_name:
+        sale.customer_name = sale.customer
+    elif sale.customer_name and not sale.customer:
+        sale.customer = sale.customer_name
+
+    size_tray_total = sum(get_sale_size_trays(sale).values())
+    if size_tray_total:
+        sale.traysSold = size_tray_total
         
     for key, value in sale.dict().items():
         setattr(existing_sale, key, value)
@@ -227,11 +254,16 @@ def update_calendar(event_id: int, event: schemas.CalendarEventCreate, db: Sessi
 
 # --- VACCINATION ---
 @router.get("/vaccinations", response_model=list[schemas.VaccinationResponse])
-def get_vaccinations(db: Session = Depends(get_db), _: User = Depends(get_current_user)):
-    return db.query(Vaccination).all()
+def get_vaccinations(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    query = db.query(Vaccination)
+    if current_user.role != "Admin":
+        query = query.filter(Vaccination.administeredBy == get_inventory_actor_label(current_user))
+    return query.order_by(Vaccination.dateAdministered.desc(), Vaccination.id.desc()).all()
 
 @router.post("/vaccinations", response_model=schemas.VaccinationResponse)
-def create_vaccination(vac: schemas.VaccinationCreate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+def create_vaccination(vac: schemas.VaccinationCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    vac.administeredBy = get_inventory_actor_label(current_user)
+    vac.status = "Pending"
     new_record = Vaccination(**vac.dict())
     db.add(new_record)
     
@@ -246,6 +278,30 @@ def create_vaccination(vac: schemas.VaccinationCreate, db: Session = Depends(get
     db.commit()
     db.refresh(new_record)
     return new_record
+
+@router.put("/vaccinations/{vaccination_id}", response_model=schemas.VaccinationResponse)
+def update_vaccination(vaccination_id: int, vac: schemas.VaccinationCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    existing = db.query(Vaccination).filter(Vaccination.id == vaccination_id).first()
+    if not existing:
+        raise HTTPException(status_code=404, detail="Vaccination record not found")
+
+    if current_user.role != "Admin" and existing.administeredBy != get_inventory_actor_label(current_user):
+        raise HTTPException(status_code=403, detail="You can only update your own vaccination records")
+
+    status_value = (vac.status or "Pending").strip()
+    if status_value not in ("Pending", "Complete"):
+        raise HTTPException(status_code=400, detail="Status must be Pending or Complete")
+
+    update_data = vac.dict()
+    update_data["status"] = status_value
+    update_data["administeredBy"] = existing.administeredBy or get_inventory_actor_label(current_user)
+
+    for key, value in update_data.items():
+        setattr(existing, key, value)
+
+    db.commit()
+    db.refresh(existing)
+    return existing
 
 # --- HATCHERY ---
 @router.get("/hatchery", response_model=list[schemas.HatcheryResponse])

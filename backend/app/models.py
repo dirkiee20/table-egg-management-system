@@ -65,6 +65,12 @@ class Sale(Base):
     address = Column(String, nullable=True)
     date = Column(String)
     traysSold = Column(Integer)
+    jumbo = Column(Integer, default=0)
+    extralarge = Column(Integer, default=0)
+    large = Column(Integer, default=0)
+    medium = Column(Integer, default=0)
+    small = Column(Integer, default=0)
+    peewee = Column(Integer, default=0)
     pricePerTray = Column(Float)
     total = Column(Float)
     balance = Column(Float, default=0.0)
@@ -111,6 +117,7 @@ class Vaccination(Base):
     dateAdministered = Column(String)
     nextDueDate = Column(String, nullable=True)
     administeredBy = Column(String, nullable=True)
+    status = Column(String, default="Pending")
     notes = Column(String, nullable=True)
 
 class Hatchery(Base):

@@ -13,6 +13,23 @@ const DEFAULT_PRICING = {
 };
 
 const SALE_GRADES = ['Jumbo', 'Extra-Large', 'Large', 'Medium', 'Small', 'Peewee'];
+const GRADE_TO_FIELD = {
+  Jumbo: 'jumbo',
+  'Extra-Large': 'extralarge',
+  Large: 'large',
+  Medium: 'medium',
+  Small: 'small',
+  Peewee: 'peewee'
+};
+
+const FIELD_TO_GRADE = {
+  jumbo: 'Jumbo',
+  extralarge: 'Extra-Large',
+  large: 'Large',
+  medium: 'Medium',
+  small: 'Small',
+  peewee: 'Peewee'
+};
 
 const Sales = () => {
   const [sales, setSales] = useState([]);
@@ -56,7 +73,7 @@ const Sales = () => {
     try {
       setLoading(true);
       const data = await api.sales.getAll();
-      setSales(data.reverse()); // latest first
+      setSales(data);
     } catch (err) {
       console.error(err);
       setErrorMarker("Failed to retrieve sales ledger.");
@@ -97,6 +114,33 @@ const Sales = () => {
     return lineItems.reduce((sum, item) => sum + Number(item.quantity), 0);
   };
 
+  const calculateSizeQuantities = () => {
+    return lineItems.reduce((totals, item) => {
+      const field = GRADE_TO_FIELD[item.grade];
+      if (field) {
+        totals[field] += Number(item.quantity) || 0;
+      }
+      return totals;
+    }, { jumbo: 0, extralarge: 0, large: 0, medium: 0, small: 0, peewee: 0 });
+  };
+
+  const buildLineItemsFromSale = (sale) => {
+    const savedItems = Object.entries(FIELD_TO_GRADE)
+      .map(([field, grade]) => ({
+        id: field,
+        grade,
+        quantity: Number(sale[field]) || 0,
+        price: getPriceForGrade(grade)
+      }))
+      .filter(item => item.quantity > 0);
+
+    if (savedItems.length > 0) {
+      return savedItems;
+    }
+
+    return [{ id: 1, grade: 'Mixed', quantity: sale.traysSold, price: sale.pricePerTray }];
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -106,6 +150,7 @@ const Sales = () => {
       const totalQty = calculateTotalQuantity();
       const totalAmt = calculateTotal();
       const avgPrice = totalQty > 0 ? (totalAmt / totalQty) : 0;
+      const sizeQuantities = calculateSizeQuantities();
       
       const amtPaidNum = isPaid ? totalAmt : (Number(amountPaid) || 0);
       const balance = Math.max(0, totalAmt - amtPaidNum);
@@ -120,6 +165,7 @@ const Sales = () => {
         address: address,
         date: saleDate,
         traysSold: totalQty,
+        ...sizeQuantities,
         pricePerTray: Number(avgPrice.toFixed(2)),
         total: Number(totalAmt.toFixed(2)),
         balance: Number(balance.toFixed(2)),
@@ -160,7 +206,7 @@ const Sales = () => {
       setContactNo(sale.contact_no || '');
       setAddress(sale.address || '');
       setSaleDate(sale.date);
-      setLineItems([{ id: 1, grade: 'Mixed', quantity: sale.traysSold, price: sale.pricePerTray }]);
+      setLineItems(buildLineItemsFromSale(sale));
       setDiscount(0);
       setIsPaid(sale.status === 'Paid');
       setAmountPaid(sale.total - (sale.balance || 0));

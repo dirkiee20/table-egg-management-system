@@ -85,7 +85,7 @@ const AdminDashboard = ({ data }) => {
     };
   });
 
-  const upcomingVaccine = vaccinations[0];
+  const upcomingVaccine = vaccinations.find(v => (v.status || 'Pending') === 'Pending');
   const upcomingEvent   = calendar[0];
 
   return (
@@ -205,7 +205,7 @@ const AdminDashboard = ({ data }) => {
 const StaffDashboard = ({ data }) => {
   const navigate = useNavigate();
   const { vaccinations, hatchery, inventory, sales } = data;
-  const upcomingVaccine = vaccinations[0];
+  const upcomingVaccine = vaccinations.find(v => (v.status || 'Pending') === 'Pending');
   const activeHatch = hatchery.find(h => !h.hatchedCount);
 
   const today = new Date().toISOString().split('T')[0];
@@ -257,7 +257,13 @@ const StaffDashboard = ({ data }) => {
             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
               Flock <strong>{upcomingVaccine.batchId}</strong> needs {upcomingVaccine.vaccineName}. Due: <strong style={{ color: 'var(--danger)' }}>{upcomingVaccine.nextDueDate}</strong>
             </p>
-            <button className="btn-secondary" style={{ fontSize: '0.8rem', padding: '6px 12px' }}>Acknowledge</button>
+            <button
+              className="btn-secondary"
+              onClick={() => navigate('/vaccinations')}
+              style={{ fontSize: '0.8rem', padding: '6px 12px' }}
+            >
+              <ArrowUpRight size={14} /> View Details
+            </button>
           </div>
         ) : (
           <div className="card" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
