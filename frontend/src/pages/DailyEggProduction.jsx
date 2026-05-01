@@ -20,13 +20,12 @@ const DailyEggProduction = () => {
   const [formData, setFormData] = useState({
     flockId: '',
     date: new Date().toISOString().split('T')[0],
-    jumbo: '',
-    extralarge: '',
-    large: '',
-    medium: '',
-    small: '',
-    peewee: '',
-    bunkig: '',
+    jumbo_trays: '', jumbo_odd: '',
+    extralarge_trays: '', extralarge_odd: '',
+    large_trays: '', large_odd: '',
+    medium_trays: '', medium_odd: '',
+    small_trays: '', small_odd: '',
+    peewee_trays: '', peewee_odd: '',
     cracked: '',
     reject: '',
     remarks: ''
@@ -47,9 +46,9 @@ const DailyEggProduction = () => {
     fetchFlocks();
   }, []);
 
-  const totalTrays = SIZE_FIELDS.reduce((sum, field) => sum + parseWholeNumber(formData[field]), 0);
-  const oddEggs = parseWholeNumber(formData.bunkig);
-  const totalGoodEggs = (totalTrays * EGGS_PER_TRAY) + oddEggs;
+  const totalTrays = SIZE_FIELDS.reduce((sum, field) => sum + parseWholeNumber(formData[`${field}_trays`]), 0);
+  const totalOddEggs = SIZE_FIELDS.reduce((sum, field) => sum + parseWholeNumber(formData[`${field}_odd`]), 0);
+  const totalGoodEggs = (totalTrays * EGGS_PER_TRAY) + totalOddEggs;
   const crackedVal = parseWholeNumber(formData.cracked);
   const rejectVal = parseWholeNumber(formData.reject);
 
@@ -60,7 +59,7 @@ const DailyEggProduction = () => {
 
     try {
       const sizePayload = SIZE_FIELDS.reduce((payload, field) => {
-        payload[field] = parseWholeNumber(formData[field]) * EGGS_PER_TRAY;
+        payload[field] = (parseWholeNumber(formData[`${field}_trays`]) * EGGS_PER_TRAY) + parseWholeNumber(formData[`${field}_odd`]);
         return payload;
       }, {});
 
@@ -68,7 +67,7 @@ const DailyEggProduction = () => {
         date: formData.date,
         flockId: formData.flockId,
         ...sizePayload,
-        bunkig: oddEggs,
+        bunkig: 0,
         cracked: crackedVal,
         reject: rejectVal,
         mortality: 0,
@@ -79,13 +78,12 @@ const DailyEggProduction = () => {
 
       setFormData(prev => ({
         ...prev,
-        jumbo: '',
-        extralarge: '',
-        large: '',
-        medium: '',
-        small: '',
-        peewee: '',
-        bunkig: '',
+        jumbo_trays: '', jumbo_odd: '',
+        extralarge_trays: '', extralarge_odd: '',
+        large_trays: '', large_odd: '',
+        medium_trays: '', medium_odd: '',
+        small_trays: '', small_odd: '',
+        peewee_trays: '', peewee_odd: '',
         cracked: '',
         reject: '',
         remarks: ''
@@ -153,108 +151,52 @@ const DailyEggProduction = () => {
 
           <h3 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '6px' }}>Production Grading</h3>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '16px' }}>
-            Enter full trays for each egg size. Loose eggs that do not complete a tray belong in ODD.
+            Enter full trays and odd eggs for each size.
           </p>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Jumbo (J) - Trays</label>
-              <input
-                type="number"
-                inputMode="numeric"
-                min="0"
-                step="1"
-                placeholder="0"
-                value={formData.jumbo}
-                onChange={e => setFormData({ ...formData, jumbo: e.target.value })}
-              />
-            </div>
-            <div className="form-group">
-              <label>Extra-Large (ExL) - Trays</label>
-              <input
-                type="number"
-                inputMode="numeric"
-                min="0"
-                step="1"
-                placeholder="0"
-                value={formData.extralarge}
-                onChange={e => setFormData({ ...formData, extralarge: e.target.value })}
-              />
-            </div>
-            <div className="form-group">
-              <label>Large (L) - Trays</label>
-              <input
-                type="number"
-                inputMode="numeric"
-                min="0"
-                step="1"
-                placeholder="0"
-                value={formData.large}
-                onChange={e => setFormData({ ...formData, large: e.target.value })}
-              />
-            </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+            {[
+              { id: 'jumbo', label: 'Jumbo (J)' },
+              { id: 'extralarge', label: 'Extra-Large (ExL)' },
+              { id: 'large', label: 'Large (L)' },
+              { id: 'medium', label: 'Medium (M)' },
+              { id: 'small', label: 'Small (S)' },
+              { id: 'peewee', label: 'Peewee (P)' }
+            ].map(size => (
+              <div key={size.id} className="form-group" style={{ marginBottom: 0 }}>
+                <label>{size.label}</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    step="1"
+                    placeholder="Trays"
+                    value={formData[`${size.id}_trays`]}
+                    onChange={e => setFormData({ ...formData, [`${size.id}_trays`]: e.target.value })}
+                    style={{ flex: 1, minWidth: 0 }}
+                  />
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    step="1"
+                    placeholder="Odd"
+                    value={formData[`${size.id}_odd`]}
+                    onChange={e => setFormData({ ...formData, [`${size.id}_odd`]: e.target.value })}
+                    style={{ flex: 1, minWidth: 0 }}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Medium (M) - Trays</label>
-              <input
-                type="number"
-                inputMode="numeric"
-                min="0"
-                step="1"
-                placeholder="0"
-                value={formData.medium}
-                onChange={e => setFormData({ ...formData, medium: e.target.value })}
-              />
-            </div>
-            <div className="form-group">
-              <label>Small (S) - Trays</label>
-              <input
-                type="number"
-                inputMode="numeric"
-                min="0"
-                step="1"
-                placeholder="0"
-                value={formData.small}
-                onChange={e => setFormData({ ...formData, small: e.target.value })}
-              />
-            </div>
-            <div className="form-group">
-              <label>Peewee (P) - Trays</label>
-              <input
-                type="number"
-                inputMode="numeric"
-                min="0"
-                step="1"
-                placeholder="0"
-                value={formData.peewee}
-                onChange={e => setFormData({ ...formData, peewee: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <div style={{ padding: '16px', backgroundColor: '#f0fdf4', color: '#166534', borderRadius: '6px', marginBottom: '20px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between' }}>
+          <div style={{ padding: '16px', backgroundColor: '#f0fdf4', color: '#166534', borderRadius: '6px', margin: '20px 0', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
             <span>Total Eggs: {totalGoodEggs}</span>
-            <span>Total Trays: {totalTrays}</span>
+            <span>Total Trays: {totalTrays} + {totalOddEggs} Odd</span>
           </div>
 
-          <h3 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '16px', marginTop: '24px' }}>ODD Stock & Damages</h3>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>ODD Stock - Loose eggs</label>
-              <input
-                type="number"
-                inputMode="numeric"
-                min="0"
-                step="1"
-                placeholder="0"
-                value={formData.bunkig}
-                onChange={e => setFormData({ ...formData, bunkig: e.target.value })}
-              />
-            </div>
-          </div>
+          <h3 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '16px', marginTop: '24px' }}>Damages</h3>
 
           <div className="form-row">
             <div className="form-group">

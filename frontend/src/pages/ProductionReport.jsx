@@ -243,10 +243,10 @@ const ProductionReport = () => {
       )}
 
       <div className="card no-print">
-        <div className="filter-bar" style={{ marginBottom: 0 }}>
-          <div className="form-group" style={{ marginBottom: 0, minWidth: '200px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: rangeType === 'custom' ? 'repeat(auto-fit, minmax(140px, 1fr))' : '1fr 1fr', gap: '16px', width: '100%' }}>
+          <div className="form-group" style={{ marginBottom: 0, minWidth: 0 }}>
             <label>Report Range</label>
-            <select value={rangeType} onChange={(event) => setRangeType(event.target.value)}>
+            <select value={rangeType} onChange={(event) => setRangeType(event.target.value)} style={{ width: '100%', minWidth: 0 }}>
               <option value="daily">Daily</option>
               <option value="weekly">Weekly</option>
               <option value="monthly">Monthly</option>
@@ -255,30 +255,33 @@ const ProductionReport = () => {
           </div>
 
           {rangeType !== 'custom' ? (
-            <div className="form-group" style={{ marginBottom: 0, minWidth: '220px' }}>
-              <label>{rangeType === 'daily' ? 'Date' : rangeType === 'weekly' ? 'Week Reference Date' : 'Month Reference Date'}</label>
+            <div className="form-group" style={{ marginBottom: 0, minWidth: 0 }}>
+              <label>{rangeType === 'daily' ? 'Date' : rangeType === 'weekly' ? 'Week Reference' : 'Month Reference'}</label>
               <input
                 type="date"
                 value={referenceDate}
                 onChange={(event) => setReferenceDate(event.target.value)}
+                style={{ width: '100%', minWidth: 0 }}
               />
             </div>
           ) : (
             <>
-              <div className="form-group" style={{ marginBottom: 0, minWidth: '220px' }}>
+              <div className="form-group" style={{ marginBottom: 0, minWidth: 0 }}>
                 <label>Start Date</label>
                 <input
                   type="date"
                   value={customStartDate}
                   onChange={(event) => setCustomStartDate(event.target.value)}
+                  style={{ width: '100%', minWidth: 0 }}
                 />
               </div>
-              <div className="form-group" style={{ marginBottom: 0, minWidth: '220px' }}>
+              <div className="form-group" style={{ marginBottom: 0, minWidth: 0 }}>
                 <label>End Date</label>
                 <input
                   type="date"
                   value={customEndDate}
                   onChange={(event) => setCustomEndDate(event.target.value)}
+                  style={{ width: '100%', minWidth: 0 }}
                 />
               </div>
             </>

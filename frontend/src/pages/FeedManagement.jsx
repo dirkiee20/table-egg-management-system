@@ -206,35 +206,39 @@ const FeedManagement = () => {
       <div className="card" style={{ marginTop: '24px' }}>
          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
             <h3 style={{ fontSize: '1.125rem', color: 'var(--text-main)' }}>Historical Records</h3>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', flexWrap: 'wrap' }}>
-              <div className="form-group" style={{ marginBottom: 0, minWidth: '150px' }}>
-                <label style={{ fontSize: '0.75rem' }}>From</label>
-                <input
-                  type="date"
-                  value={dateRange.from}
-                  max={dateRange.to || undefined}
-                  onChange={e => setDateRange(prev => ({ ...prev, from: e.target.value }))}
-                  style={{ padding: '6px 10px' }}
-                />
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', flexWrap: 'wrap', width: '100%' }}>
+              <div style={{ display: 'flex', gap: '8px', flex: '1 1 100%', minWidth: 0 }}>
+                <div className="form-group" style={{ marginBottom: 0, flex: 1, minWidth: 0 }}>
+                  <label style={{ fontSize: '0.75rem' }}>From</label>
+                  <input
+                    type="date"
+                    value={dateRange.from}
+                    max={dateRange.to || undefined}
+                    onChange={e => setDateRange(prev => ({ ...prev, from: e.target.value }))}
+                    style={{ padding: '6px 10px', width: '100%', minWidth: 0 }}
+                  />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0, flex: 1, minWidth: 0 }}>
+                  <label style={{ fontSize: '0.75rem' }}>To</label>
+                  <input
+                    type="date"
+                    value={dateRange.to}
+                    min={dateRange.from || undefined}
+                    onChange={e => setDateRange(prev => ({ ...prev, to: e.target.value }))}
+                    style={{ padding: '6px 10px', width: '100%', minWidth: 0 }}
+                  />
+                </div>
               </div>
-              <div className="form-group" style={{ marginBottom: 0, minWidth: '150px' }}>
-                <label style={{ fontSize: '0.75rem' }}>To</label>
-                <input
-                  type="date"
-                  value={dateRange.to}
-                  min={dateRange.from || undefined}
-                  onChange={e => setDateRange(prev => ({ ...prev, to: e.target.value }))}
-                  style={{ padding: '6px 10px' }}
-                />
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <span className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.875rem', cursor: 'default', height: '44px' }}>
+                  <Filter size={16}/> {filteredFeedRecords.length} shown
+                </span>
+                {hasDateRange && (
+                  <button type="button" className="btn-secondary" onClick={clearDateRange} style={{ padding: '6px 10px', fontSize: '0.875rem', height: '44px' }} title="Clear date range">
+                    <X size={16} />
+                  </button>
+                )}
               </div>
-              <span className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.875rem', cursor: 'default' }}>
-                <Filter size={16}/> {filteredFeedRecords.length} shown
-              </span>
-              {hasDateRange && (
-                <button type="button" className="btn-secondary" onClick={clearDateRange} style={{ padding: '6px 10px', fontSize: '0.875rem' }} title="Clear date range">
-                  <X size={16} />
-                </button>
-              )}
             </div>
          </div>
 

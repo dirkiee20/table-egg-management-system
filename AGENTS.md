@@ -1,81 +1,117 @@
-# AGENTS.md – Table Egg Management System
+# AGENTS.md
 
-## Overview
-This document defines how the AI developer (Cursor AI) should implement requested updates in the system.  
-Focus ONLY on modifying existing features. Do NOT refactor unrelated code.
+## Role
+You are the developer agent for the Table Egg Management System.
 
-## General Rules
-1. Do NOT break existing working features.
-2. Follow current project structure (frontend + backend).
-3. Use consistent naming conventions already in the project.
-4. Ensure UI is clean, responsive, and minimal.
-5. All computations must be automatic (no manual calculations required by user).
-6. All editable fields must persist in the database.
-7. Fix broken buttons (especially Actions buttons).
+Your main task is to improve the existing system UI so it becomes:
 
----
+- Fully responsive on mobile phones
+- Professional and modern-looking
+- Smooth in transitions and interactions
+- Ready for future APK conversion using Capacitor
+- Usable on desktop, tablet, and mobile
 
-## System Logic Standards
+## Main Goal
+Make the current web system feel like a mobile-friendly app while keeping it working well on desktop.
 
-### Egg Conversion
-- 1 tray = 30 eggs
-- Always compute:
-  - Total Eggs = trays * 30
-  - Total Trays = eggs / 30
+Do not remove existing features unless required. Improve the layout, spacing, responsiveness, and user experience.
 
-### Egg Sizes
-- Jumbo: ≥70g
-- Extra-Large: 65–69g
-- Large: 60–64g
-- Medium: 55–59g
-- Small: 45–54g
-- Peewee: <45g
+## Design Direction
+Use a clean, professional dashboard style.
 
----
+The system should have:
 
-## Dynamic Behavior Rules
+- Modern cards
+- Proper spacing
+- Responsive tables
+- Mobile-friendly forms
+- Smooth page transitions
+- Clear buttons and actions
+- Professional colors
+- Consistent typography
+- App-like mobile experience
 
-### Mortality Logic
-- Mortality reduces number of hens automatically:
-  new_hens = current_hens - mortality
-- Both fields must remain editable
+## Mobile Responsiveness Rules
 
-### Pricing Logic
-- Prices are set by admin
-- Auto-compute:
-  total = trays × price_per_tray
-- Allow override for discounts
+### Layout
+- On desktop, keep sidebar/dashboard layout if already existing.
+- On mobile, avoid horizontal overflow.
+- Sidebar should collapse or become mobile-friendly.
+- Content should use full width on small screens.
+- Cards should stack vertically on mobile.
+- Tables should become scrollable or card-style on mobile.
 
-### Payment Status Logic
-- If balance = 0 → PAID (green)
-- If balance = total → UNPAID (red)
-- If 0 < balance < total → PARTIAL (orange)
+### Forms
+- Forms must fit small screens.
+- Inputs should be full-width on mobile.
+- Buttons should be easy to tap.
+- Avoid tiny text and cramped spacing.
 
----
+### Tables
+- Tables must not break the mobile layout.
+- Use horizontal scroll only if needed.
+- Prefer card-style layout on very small screens if possible.
+- Action buttons should wrap properly.
 
-## Role Permissions
+### Navigation
+- Navigation should be easy to access on mobile.
+- Add smooth open/close transition if using mobile sidebar/drawer.
+- Make active menu items clear.
 
-### Admin
-- Full access
-- Manage pricing
-- View staff activity
+## Capacitor APK Readiness
 
-### Staff
-- Can perform sales
-- Cannot manage pricing
-- Their name must be recorded in transactions
+Prepare the frontend so it can later be converted into APK using Capacitor.
 
----
+Follow these rules:
 
-## UI Rules
-- Replace all “pieces” with “trays” where applicable
-- Ensure tables are clean and editable inline where needed
-- Ensure all buttons (Edit/Delete/Save) are functional
-- Maintain consistent layout across admin & staff views
+- Avoid fixed desktop-only widths.
+- Avoid layout that depends only on hover.
+- Make all buttons touch-friendly.
+- Use relative units and responsive classes.
+- Make the app usable in portrait phone view.
+- Avoid unnecessary browser-specific behavior.
+- Keep routes clean and compatible with single-page app behavior.
+- Make sure there are no horizontal scroll issues on mobile.
 
----
+Do not install Capacitor yet unless specifically asked.
 
-## Important Notes
-- Do NOT create unnecessary new modules
-- Extend existing components whenever possible
-- Validate all user inputs
+## UI/UX Improvements
+
+Improve the interface by applying:
+
+- Smooth transitions on buttons, cards, sidebar, modals, and page changes
+- Hover effects for desktop
+- Active states for navigation
+- Better spacing between sections
+- Professional form layout
+- Better table readability
+- Rounded cards and subtle shadows
+- Consistent button colors
+- Proper empty states
+- Proper loading states if applicable
+
+## Technical Rules
+
+Before editing:
+1. Inspect the current project structure.
+2. Identify the frontend framework being used.
+3. Check existing CSS/Tailwind/Bootstrap setup.
+4. Reuse existing components when possible.
+5. Avoid unnecessary refactoring.
+
+When editing:
+1. Keep existing functionality working.
+2. Do not break backend API calls.
+3. Do not remove existing routes.
+4. Do not rename files unless necessary.
+5. Make changes gradually and test after each major update.
+
+## Expected Result
+
+After completing the task:
+
+- The system looks professional on desktop.
+- The system works properly on mobile phones.
+- Dashboard, forms, tables, and navigation are responsive.
+- The design feels smooth and modern.
+- The system is ready for future Capacitor APK conversion. 

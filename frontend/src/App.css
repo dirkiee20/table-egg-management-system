@@ -32,7 +32,8 @@
 .page-container {
   max-width: 1280px;
   margin: 0 auto;
-  animation: fadeIn 0.25s ease;
+  animation: fadeIn 0.25s ease-in-out;
+  width: 100%;
 }
 
 .page-header {
@@ -75,7 +76,7 @@
   border: 1px solid var(--border-color);
   padding: 24px;
   margin-bottom: 24px;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: box-shadow 0.25s ease-in-out, border-color 0.25s ease-in-out, transform 0.25s ease-in-out;
 }
 
 .card:hover {
@@ -115,7 +116,7 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.25s ease-in-out, box-shadow 0.25s ease-in-out;
   box-shadow: var(--shadow-sm);
 }
 
@@ -169,11 +170,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 9px 16px;
+  gap: 8px;
+  padding: 10px 18px;
+  min-height: 44px;
   border-radius: var(--radius);
   font-weight: 500;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   letter-spacing: 0.01em;
   transition: var(--transition);
   white-space: nowrap;
@@ -489,15 +491,16 @@
 .form-group select,
 .form-group textarea {
   width: 100%;
-  padding: 9px 12px;
+  padding: 12px 14px;
   border: 1.5px solid var(--border-color);
   border-radius: var(--radius);
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   color: var(--text-main);
   background-color: var(--bg-surface);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
   outline: none;
   appearance: none;
+  min-height: 44px;
 }
 
 .form-group select {
@@ -555,11 +558,12 @@
   justify-content: flex-end;
   align-items: center;
   gap: 6px;
+  flex-wrap: nowrap;
 }
 
 .action-btn {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;

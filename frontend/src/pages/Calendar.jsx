@@ -9,7 +9,7 @@ import '../App.css';
 
 const normalizeEventStatus = (status) => status === 'In Progress' ? 'Pending' : (status || 'Pending');
 const getStatusSelectStyle = (status) => ({
-  color: status === 'Completed' ? '#166534' : 'var(--text-main)',
+  color: status === 'Completed' ? 'var(--success)' : 'var(--text-main)',
   fontWeight: status === 'Completed' ? 700 : 500
 });
 
@@ -123,14 +123,14 @@ const Calendar = () => {
           <div 
             key={day}
             style={{ 
-              backgroundColor: isCurrentMonth ? 'white' : '#f8fafc',
+              backgroundColor: isCurrentMonth ? 'var(--bg-surface)' : 'var(--bg-surface-2)',
               padding: '8px',
               minHeight: '120px',
               display: 'flex',
               flexDirection: 'column',
               gap: '4px',
-              borderRight: '1px solid #e2e8f0',
-              borderBottom: '1px solid #e2e8f0'
+              borderRight: '1px solid var(--border-color)',
+              borderBottom: '1px solid var(--border-color)'
             }}
           >
             {/* Day Number */}
@@ -139,7 +139,7 @@ const Calendar = () => {
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 width: '28px', height: '28px', borderRadius: '50%',
                 backgroundColor: isToday ? 'var(--primary)' : 'transparent',
-                color: isToday ? 'white' : (isCurrentMonth ? 'var(--text-main)' : '#94a3b8'),
+                color: isToday ? 'white' : (isCurrentMonth ? 'var(--text-main)' : 'var(--text-placeholder)'),
                 fontWeight: isToday ? 'bold' : '500', fontSize: '0.875rem'
               }}>
                 {formattedDate}
@@ -149,20 +149,20 @@ const Calendar = () => {
             {/* Events Stack */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', overflowY: 'auto', flex: 1 }}>
                {dayEvents.map(ev => {
-                  let bgColor = '#f1f5f9'; let textColor = '#475569'; let borderColor = '#cbd5e1';
+                  let bgColor = 'var(--bg-app)'; let textColor = 'var(--text-secondary)'; let borderColor = 'var(--border-color)';
 
                   if (ev.type === 'vaccination') {
-                    bgColor = '#fee2e2'; textColor = '#b91c1c'; borderColor = '#fca5a5';
+                    bgColor = 'var(--danger-bg)'; textColor = 'var(--danger-text)'; borderColor = 'var(--danger)';
                   } else if (ev.type === 'hatchery') {
-                    bgColor = '#dbeafe'; textColor = '#1d4ed8'; borderColor = '#93c5fd';
+                    bgColor = 'var(--info-bg)'; textColor = 'var(--info-text)'; borderColor = 'var(--info)';
                   } else {
-                    bgColor = '#fef9c3'; textColor = '#a16207'; borderColor = '#fde047';
+                    bgColor = 'var(--warning-bg)'; textColor = 'var(--warning-text)'; borderColor = 'var(--warning)';
                   }
 
                   if (ev.status === 'Completed') {
-                    bgColor = '#dcfce7';
-                    textColor = '#166534';
-                    borderColor = '#22c55e';
+                    bgColor = 'var(--success-bg)';
+                    textColor = 'var(--success-text)';
+                    borderColor = 'var(--success)';
                   }
 
                   return (
@@ -226,7 +226,7 @@ const Calendar = () => {
 
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         {/* Calendar Header Control Row */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'white' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-surface)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <CalendarIcon size={24} color="var(--primary)" />
             <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text-main)', margin: 0 }}>
@@ -243,7 +243,7 @@ const Calendar = () => {
         </div>
 
         {/* Responsive Grid Container */}
-        <div style={{ overflowX: 'auto', backgroundColor: '#f8fafc', position: 'relative' }}>
+        <div style={{ overflowX: 'auto', backgroundColor: 'var(--bg-surface-2)', position: 'relative' }}>
           {loading && events.length === 0 && (
             <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255,255,255,0.7)', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Loader2 size={32} className="spin" color="var(--primary)" />
@@ -261,7 +261,7 @@ const Calendar = () => {
             </div>
 
             {/* Monthly Grid */}
-            <div style={{ borderLeft: '1px solid #e2e8f0', borderTop: '1px solid #e2e8f0' }}>
+            <div style={{ borderLeft: '1px solid var(--border-color)', borderTop: '1px solid var(--border-color)' }}>
               {renderCells()}
             </div>
             
@@ -324,7 +324,7 @@ const Calendar = () => {
                     style={getStatusSelectStyle(formData.status)}
                   >
                     <option value="Pending">Pending</option>
-                    <option value="Completed" style={{ color: '#166534', fontWeight: 700 }}>Completed</option>
+                    <option value="Completed" style={{ color: 'var(--success)', fontWeight: 700 }}>Completed</option>
                   </select>
                 </div>
               </div>

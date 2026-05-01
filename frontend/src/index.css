@@ -59,9 +59,9 @@
   --radius-full: 9999px;
 
   /* Transitions */
-  --transition-fast:   all 0.15s ease;
-  --transition:        all 0.2s ease;
-  --transition-slow:   all 0.35s ease;
+  --transition-fast:   all 0.15s ease-in-out;
+  --transition:        all 0.2s ease-in-out;
+  --transition-slow:   all 0.3s ease-in-out;
 
   /* Sidebar */
   --sidebar-width: 256px;
@@ -124,6 +124,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 a { text-decoration: none; color: inherit; }

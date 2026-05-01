@@ -1,172 +1,245 @@
-# TASKS.md – Table Egg Management System Updates
+# TASKS.md
 
-## 1. Dashboard (Admin & Staff)
-- Change label:
-  - "Pieces Ready" → "Trays"
+## Main Task
+Make the Table Egg Management System fully responsive for mobile view and improve the design so it looks professional, smooth, and ready for future APK conversion using Capacitor.
 
-- Remove:
-  - Hatchery Records (Admin & Staff dashboard)
+## Task 1: Inspect the Current Frontend
 
----
+Check the current frontend structure.
 
-## 2. Flock Management (Admin & Staff)
+Identify:
 
-### Add New Flock
-- If Breed = "Other":
-  - Show input field: "Enter Breed"
+- Framework used
+- Styling method used
+- Main layout files
+- Sidebar or navigation component
+- Dashboard page
+- Table pages
+- Form pages
+- Modal components if any
 
-### Table Updates
-- Add column: Mortality (next to Status)
+Do not start major changes until the structure is understood.
 
-### Logic
-- If mortality is entered:
-  - Automatically reduce number_of_hens
+## Task 2: Fix Global Mobile Responsiveness
 
-### Editing
-- Make editable:
-  - Mortality
-  - Number of Hens
+Update the global layout so the system works well on phone screens.
 
-### Fix
-- Actions button (Edit/Delete) must work
+Requirements:
 
----
+- No horizontal overflow on mobile
+- Body should fit screen width
+- Main content should resize properly
+- Pages should have proper padding on mobile
+- Text should remain readable
+- Buttons should be tap-friendly
+- Inputs should not overflow
 
-## 3. Daily Production (Admin & Staff)
+Add or update global CSS if needed.
 
-### Egg Size Categories
-- Jumbo
-- Extra-Large
-- Large
-- Medium
-- Small
-- Peewee
+## Task 3: Improve Main Layout
 
-### Conversion
-- 1 tray = 30 eggs
+Make the main layout responsive.
 
-### Output Changes
-- Replace results with:
-  - Total Eggs
-  - Total Trays
+Desktop:
 
-### Add Section
-- ODD Stock (Bunkig)
-  - Example:
-    - 1 tray = 35 eggs → 5 bunkig
-  - Place ABOVE "Cracked"
-  - Count is per egg
+- Keep sidebar layout if already existing
+- Main content should have clean spacing
+- Dashboard should look professional
 
----
+Mobile:
 
-## 4. Egg Inventory (Admin & Staff)
+- Sidebar should collapse, hide, or become a drawer
+- Add a mobile menu button if needed
+- Content should use full width
+- Navigation should be easy to use
+- Sidebar transition should be smooth
 
-### Stock Display
-- Change:
-  - Total Sellable Stock → display in TRAYS (not pieces)
+Acceptance:
 
-### Add Breakdown
-- Show per size:
-  - P, S, M, L, ExL, J
-  - Example:
-    P: 10, S: 20, M: 30, L: 20, ExL: 30, J: 30
+- Mobile users can navigate the whole system easily.
+- No page is hidden or broken on small screens.
 
----
+## Task 4: Improve Dashboard Design
 
-## 5. Egg Inventory Table
+Make the dashboard responsive and professional.
 
-- Add column:
-  - Staff Incharge (after Date)
+Requirements:
 
-- Logic:
-  - Auto-fill based on staff who made the sale
+- Dashboard cards should stack properly on mobile
+- Cards should have consistent spacing
+- Cards should have clean shadows and rounded corners
+- Important numbers should be readable
+- Dashboard should not look cramped
+- Use smooth hover and transition effects
 
----
+Acceptance:
 
-## 6. Staff Dashboard
+- Dashboard looks good on desktop and mobile.
+- Cards resize correctly on small screens.
 
-- Remove:
-  - Hatchery Records
+## Task 5: Improve Tables for Mobile
 
-- Add:
-  - Sales Privileges
+Update all table pages to work properly on mobile.
 
-- Behavior:
-  - When staff performs sale:
-    - Save their name in Egg Inventory → Staff Incharge
+Pages may include:
 
----
+- Flock Management
+- Daily Production
+- Inventory
+- Sales
+- Expenses
+- Reports
+- Users
+- Any other existing table page
 
-## 7. Sales Transaction (Admin & Staff)
+Requirements:
 
-### Table Updates
-- Add column:
-  - Balance (between Total and Payment Status)
+- Tables must not break the screen
+- Add horizontal scroll wrapper if needed
+- Table text should remain readable
+- Action buttons should wrap or stack properly
+- On very small screens, use card-style layout if possible
+- Keep all existing actions working
 
-### Logic
-- Payment Status based on balance:
-  - 0 → PAID (green)
-  - full unpaid → UNPAID (red)
-  - partial → PARTIAL (orange)
+Acceptance:
 
-### Fix
-- Actions button must allow:
-  - Edit
-  - Update payment status
+- Tables are usable on phone screens.
+- Edit, delete, view, and action buttons are still easy to tap.
 
----
+## Task 6: Improve Forms and Inputs
 
-## 8. Pricing Area (Admin Only)
+Make all forms mobile-friendly.
 
-### Location
-- Finance category (left panel)
+Requirements:
 
-### Features
-- Admin can:
-  - Set price per tray
-  - Set price per egg size
+- Inputs should be full-width on mobile
+- Labels should be clear
+- Spacing should be consistent
+- Submit buttons should be easy to tap
+- Form sections should stack vertically on mobile
+- Validation messages should display properly
+- Modals should fit on mobile screens
 
-### Example
-- Large tray price: ₱255–₱270
+Acceptance:
 
-### Logic
-- Set default price
-- Used automatically in sales
+- Users can add and edit records on mobile without layout issues.
 
----
+## Task 7: Add Smooth Transitions
 
-## 9. Point of Sale (Admin & Staff)
+Add smooth transitions to improve user experience.
 
-### Auto Pricing
-- If user selects:
-  - Egg size (e.g., Large)
-  - Number of trays
+Apply transitions to:
 
-→ Automatically compute total
+- Sidebar open/close
+- Buttons
+- Cards
+- Modals
+- Page sections
+- Dropdowns
+- Form focus states
 
-### Example
-- 10 trays × ₱255 = ₱2550
+Use subtle transitions only. Avoid excessive animations.
 
-### Discount Support
-- Allow manual edit:
-  - Example:
-    - 10% discount → ₱2259
+Recommended transition:
 
-### Dynamic Updates
-- Price updates automatically when:
-  - Tray count changes
-  - Egg size changes
+- 150ms to 300ms
+- ease-in-out
+- opacity, transform, background, shadow
 
----
+Acceptance:
 
-## FINAL CHECKLIST
-- [ ] All labels updated to trays
-- [ ] Mortality logic working
-- [ ] Actions buttons fixed
-- [ ] Egg conversion working (30 eggs/tray)
-- [ ] ODD stock (bunkig) added
-- [ ] Inventory shows trays + size breakdown
-- [ ] Staff Incharge column working
-- [ ] Sales balance logic working
-- [ ] Pricing system implemented
-- [ ] POS auto-calculation working
+- UI feels smooth and professional.
+- Animations do not feel distracting.
+
+## Task 8: Improve Professional Design
+
+Improve the visual style of the system.
+
+Requirements:
+
+- Consistent colors
+- Consistent spacing
+- Consistent button styles
+- Clean card design
+- Professional typography
+- Better page headers
+- Better section spacing
+- Better empty states if applicable
+- Better loading states if applicable
+
+Acceptance:
+
+- The system should look like a real production-ready business app.
+
+## Task 9: Prepare for Future Capacitor APK Conversion
+
+Make frontend decisions that will help later when converting to APK.
+
+Requirements:
+
+- Use responsive app-like layout
+- Avoid desktop-only interactions
+- Avoid fixed large widths
+- Avoid hover-only actions
+- Make buttons touch-friendly
+- Make navigation mobile-friendly
+- Keep SPA routing clean
+- Avoid unnecessary browser-dependent features
+
+Do not install or configure Capacitor yet unless requested.
+
+Acceptance:
+
+- The app can later be converted to APK with fewer UI problems.
+
+## Task 10: Test Responsiveness
+
+Test the system in browser responsive mode.
+
+Test screen sizes:
+
+- 360px width
+- 390px width
+- 414px width
+- 768px width
+- Desktop width
+
+Check:
+
+- Dashboard
+- Sidebar/navigation
+- All table pages
+- All forms
+- All modals
+- Buttons
+- Login page if existing
+- Reports page if existing
+
+Acceptance:
+
+- No horizontal overflow
+- No broken buttons
+- No unreadable text
+- No unusable forms
+- No broken navigation
+
+## Final Output Required
+
+After completing the edits, report:
+
+1. Files changed
+2. What was improved
+3. Mobile responsiveness changes made
+4. Design improvements made
+5. Any remaining issues or suggestions
+
+## Important Reminder
+
+Do not break existing features.
+
+Focus only on:
+
+- Mobile responsiveness
+- Professional design
+- Smooth transitions
+- Future Capacitor APK readiness
