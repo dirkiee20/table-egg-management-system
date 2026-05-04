@@ -2,8 +2,9 @@ from datetime import datetime, timedelta, timezone
 from jose import jwt
 from typing import Optional
 import hashlib
+import os
 
-SECRET_KEY = "super-secret-egg-farm-key"
+SECRET_KEY = os.getenv("SECRET_KEY", "super-secret-egg-farm-key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 # 24 hours
 

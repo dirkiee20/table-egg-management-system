@@ -1,8 +1,9 @@
 import sqlite3
 from pathlib import Path
+from app.database import DATABASE_FILE, IS_SQLITE
 
 
-DB_PATH = Path(__file__).resolve().parent.parent / "farm.db"
+DB_PATH = DATABASE_FILE
 
 
 def add_column(cursor, table, column, column_type, default=""):
@@ -17,6 +18,10 @@ def add_column(cursor, table, column, column_type, default=""):
 
 
 def run_migrations(db_path: Path | None = None):
+    if not IS_SQLITE and db_path is None:
+        print("Skipping SQLite migrations because DATABASE_URL points to PostgreSQL.")
+        return
+
     active_db_path = Path(db_path) if db_path else DB_PATH
     conn = sqlite3.connect(active_db_path)
     cursor = conn.cursor()

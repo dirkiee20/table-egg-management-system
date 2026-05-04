@@ -1,13 +1,15 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import engine, Base, get_db, SessionLocal
+from app.database import engine, Base, IS_SQLITE, SessionLocal
 from app.migrate import run_migrations
 from app.routers import auth
 from app.routers import endpoints
 
 # Create tables
 Base.metadata.create_all(bind=engine)
-run_migrations()
+if IS_SQLITE:
+    run_migrations()
 
 # Seed the demo users automatically on startup
 db = SessionLocal()
@@ -16,9 +18,17 @@ db.close()
 
 app = FastAPI(title="EggManager API", description="Layer Egg Farm Management System Backend")
 
+
+def get_cors_origins() -> list[str]:
+    origins = os.getenv("BACKEND_CORS_ORIGINS", "*")
+    if origins.strip() == "*":
+        return ["*"]
+    return [origin.strip().rstrip("/") for origin in origins.split(",") if origin.strip()]
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=get_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

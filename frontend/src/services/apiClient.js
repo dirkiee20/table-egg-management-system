@@ -1,4 +1,6 @@
-export const BASE_URL = 'http://localhost:8000/api';
+const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://heartfelt-celebration-production.up.railway.app/api';
+
+export const BASE_URL = configuredBaseUrl.replace(/\/+$/, '');
 
 export const apiClient = async (endpoint, options = {}) => {
   const token = localStorage.getItem('farm_token');

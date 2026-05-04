@@ -118,7 +118,7 @@ const Login = () => {
               </label>
               <input
                 type="text"
-                placeholder="admin@farm.com"
+                placeholder="Enter your email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 autoComplete="email"
@@ -196,17 +196,7 @@ const Login = () => {
             </button>
           </form>
 
-          <div style={{
-            marginTop: '28px', padding: '14px 16px',
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.06)',
-            borderRadius: '10px',
-            fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)'
-          }}>
-            <p style={{ fontWeight: '700', marginBottom: '6px', color: 'rgba(255,255,255,0.4)' }}>Demo Accounts</p>
-            <p>Admin: <code style={{ color: 'rgba(255,255,255,0.55)' }}>admin@farm.com</code> / <code style={{ color: 'rgba(255,255,255,0.55)' }}>admin123</code></p>
-            <p style={{ marginTop: '4px' }}>Staff: <code style={{ color: 'rgba(255,255,255,0.55)' }}>staff@farm.com</code> / <code style={{ color: 'rgba(255,255,255,0.55)' }}>staff123</code></p>
-          </div>
+          {/* credentials block removed */}
         </div>
       </div>
     </div>
