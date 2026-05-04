@@ -20,14 +20,12 @@ const DailyEggProduction = () => {
   const [formData, setFormData] = useState({
     flockId: '',
     date: new Date().toISOString().split('T')[0],
-    jumbo_trays: '', jumbo_odd: '',
-    extralarge_trays: '', extralarge_odd: '',
-    large_trays: '', large_odd: '',
-    medium_trays: '', medium_odd: '',
-    small_trays: '', small_odd: '',
-    peewee_trays: '', peewee_odd: '',
-    cracked: '',
-    reject: '',
+    jumbo_trays: '', jumbo_odd: '', jumbo_cracked: '', jumbo_reject: '',
+    extralarge_trays: '', extralarge_odd: '', extralarge_cracked: '', extralarge_reject: '',
+    large_trays: '', large_odd: '', large_cracked: '', large_reject: '',
+    medium_trays: '', medium_odd: '', medium_cracked: '', medium_reject: '',
+    small_trays: '', small_odd: '', small_cracked: '', small_reject: '',
+    peewee_trays: '', peewee_odd: '', peewee_cracked: '', peewee_reject: '',
     remarks: ''
   });
 
@@ -49,8 +47,8 @@ const DailyEggProduction = () => {
   const totalTrays = SIZE_FIELDS.reduce((sum, field) => sum + parseWholeNumber(formData[`${field}_trays`]), 0);
   const totalOddEggs = SIZE_FIELDS.reduce((sum, field) => sum + parseWholeNumber(formData[`${field}_odd`]), 0);
   const totalGoodEggs = (totalTrays * EGGS_PER_TRAY) + totalOddEggs;
-  const crackedVal = parseWholeNumber(formData.cracked);
-  const rejectVal = parseWholeNumber(formData.reject);
+  const crackedVal = SIZE_FIELDS.reduce((sum, field) => sum + parseWholeNumber(formData[`${field}_cracked`]), 0);
+  const rejectVal = SIZE_FIELDS.reduce((sum, field) => sum + parseWholeNumber(formData[`${field}_reject`]), 0);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -78,14 +76,12 @@ const DailyEggProduction = () => {
 
       setFormData(prev => ({
         ...prev,
-        jumbo_trays: '', jumbo_odd: '',
-        extralarge_trays: '', extralarge_odd: '',
-        large_trays: '', large_odd: '',
-        medium_trays: '', medium_odd: '',
-        small_trays: '', small_odd: '',
-        peewee_trays: '', peewee_odd: '',
-        cracked: '',
-        reject: '',
+        jumbo_trays: '', jumbo_odd: '', jumbo_cracked: '', jumbo_reject: '',
+        extralarge_trays: '', extralarge_odd: '', extralarge_cracked: '', extralarge_reject: '',
+        large_trays: '', large_odd: '', large_cracked: '', large_reject: '',
+        medium_trays: '', medium_odd: '', medium_cracked: '', medium_reject: '',
+        small_trays: '', small_odd: '', small_cracked: '', small_reject: '',
+        peewee_trays: '', peewee_odd: '', peewee_cracked: '', peewee_reject: '',
         remarks: ''
       }));
 
@@ -154,7 +150,14 @@ const DailyEggProduction = () => {
             Enter full trays and odd eggs for each size.
           </p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+          <div className="prod-entry-container" style={{ border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden', marginBottom: '24px' }}>
+            <div className="prod-entry-row header">
+              <div>Egg Size</div>
+              <div>Full Trays</div>
+              <div>Odd Eggs</div>
+              <div>Cracked</div>
+              <div>Reject</div>
+            </div>
             {[
               { id: 'jumbo', label: 'Jumbo (J)' },
               { id: 'extralarge', label: 'Extra-Large (ExL)' },
@@ -163,67 +166,38 @@ const DailyEggProduction = () => {
               { id: 'small', label: 'Small (S)' },
               { id: 'peewee', label: 'Peewee (P)' }
             ].map(size => (
-              <div key={size.id} className="form-group" style={{ marginBottom: 0 }}>
-                <label>{size.label}</label>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min="0"
-                    step="1"
-                    placeholder="Trays"
-                    value={formData[`${size.id}_trays`]}
-                    onChange={e => setFormData({ ...formData, [`${size.id}_trays`]: e.target.value })}
-                    style={{ flex: 1, minWidth: 0 }}
-                  />
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    min="0"
-                    step="1"
-                    placeholder="Odd"
-                    value={formData[`${size.id}_odd`]}
-                    onChange={e => setFormData({ ...formData, [`${size.id}_odd`]: e.target.value })}
-                    style={{ flex: 1, minWidth: 0 }}
-                  />
+              <div key={size.id} className="prod-entry-row">
+                <div className="size-label">{size.label}</div>
+                <div className="input-group">
+                  <label className="mobile-only">Full Trays</label>
+                  <input type="number" inputMode="numeric" min="0" step="1" placeholder="0" value={formData[`${size.id}_trays`]} onChange={e => setFormData({ ...formData, [`${size.id}_trays`]: e.target.value })} style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--bg-surface)' }} />
+                </div>
+                <div className="input-group">
+                  <label className="mobile-only">Odd Eggs</label>
+                  <input type="number" inputMode="numeric" min="0" step="1" placeholder="0" value={formData[`${size.id}_odd`]} onChange={e => setFormData({ ...formData, [`${size.id}_odd`]: e.target.value })} style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--bg-surface)' }} />
+                </div>
+                <div className="input-group">
+                  <label className="mobile-only">Cracked</label>
+                  <input type="number" inputMode="numeric" min="0" step="1" placeholder="0" value={formData[`${size.id}_cracked`]} onChange={e => setFormData({ ...formData, [`${size.id}_cracked`]: e.target.value })} style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--bg-surface)' }} />
+                </div>
+                <div className="input-group">
+                  <label className="mobile-only">Reject</label>
+                  <input type="number" inputMode="numeric" min="0" step="1" placeholder="0" value={formData[`${size.id}_reject`]} onChange={e => setFormData({ ...formData, [`${size.id}_reject`]: e.target.value })} style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--bg-surface)' }} />
                 </div>
               </div>
             ))}
+            <div className="prod-entry-row footer">
+              <div>Totals</div>
+              <div>{totalTrays.toLocaleString()} Trays</div>
+              <div>{totalOddEggs.toLocaleString()} Odd</div>
+              <div style={{ color: '#b91c1c' }}>{crackedVal.toLocaleString()} Cracked</div>
+              <div style={{ color: '#b91c1c' }}>{rejectVal.toLocaleString()} Reject</div>
+            </div>
           </div>
 
-          <div style={{ padding: '16px', backgroundColor: '#f0fdf4', color: '#166534', borderRadius: '6px', margin: '20px 0', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-            <span>Total Eggs: {totalGoodEggs}</span>
-            <span>Total Trays: {totalTrays} + {totalOddEggs} Odd</span>
-          </div>
-
-          <h3 style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '16px', marginTop: '24px' }}>Damages</h3>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Cracked</label>
-              <input
-                type="number"
-                inputMode="numeric"
-                min="0"
-                step="1"
-                placeholder="0"
-                value={formData.cracked}
-                onChange={e => setFormData({ ...formData, cracked: e.target.value })}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Reject</label>
-              <input
-                type="number"
-                inputMode="numeric"
-                min="0"
-                step="1"
-                placeholder="0"
-                value={formData.reject}
-                onChange={e => setFormData({ ...formData, reject: e.target.value })}
-              />
-            </div>
+          <div style={{ padding: '16px', backgroundColor: '#f0fdf4', color: '#166534', borderRadius: '6px', margin: '0 0 20px 0', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+            <span>Total Good Eggs: {totalGoodEggs.toLocaleString()}</span>
+            <span>Total Good Trays: {totalTrays.toLocaleString()} + {totalOddEggs.toLocaleString()} Odd</span>
           </div>
 
           {isHighLoss && (

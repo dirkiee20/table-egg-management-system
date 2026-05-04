@@ -38,7 +38,6 @@ const Layout = ({ children }) => {
     { name: 'Flock Management',         path: '/flocks',            icon: Bird,              section: 'Operations' },
     { name: 'Feed Management',          path: '/feed',              icon: ClipboardList,     section: 'Operations' },
     { name: 'Daily Production',         path: '/production',        icon: ClipboardList,     section: 'Operations' },
-    { name: 'Egg Production Records',   path: '/production-records',icon: FileClock,         section: 'Operations' },
     { name: 'Egg Inventory',            path: '/inventory',         icon: Egg,               section: 'Operations' },
     { name: 'Vaccination Records',      path: '/vaccinations',      icon: Syringe,           section: 'Health' },
     { name: 'Sales',                    path: '/sales',             icon: ShoppingCart,      section: 'Finance' },
@@ -51,11 +50,11 @@ const Layout = ({ children }) => {
 
   let allowedNames = [];
   if (user?.role === ROLES.ADMIN) {
-    allowedNames = ALL_NAV_ITEMS.filter(i => i.name !== 'Production Report').map(i => i.name);
+    allowedNames = ALL_NAV_ITEMS.map(i => i.name);
   } else if (user?.role === ROLES.STAFF) {
     allowedNames = [
-      'Dashboard', 'Calendar', 'Production Report', 'Daily Production', 'Egg Production Records',
-      'Egg Inventory', 'Vaccination Records', 'Feed Management', 'Sales'
+      'Dashboard', 'Calendar', 'Production Report', 'Daily Production',
+      'Flock Management', 'Egg Inventory', 'Feed Management', 'Sales'
     ];
   }
 

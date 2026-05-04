@@ -749,3 +749,62 @@
     background-color: #f3f4f6 !important;
   }
 }
+
+/* MOBILE RESPONSIVE DATA ENTRY */
+.prod-entry-container { display: flex; flex-direction: column; gap: 0; }
+.prod-entry-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr; gap: 12px; align-items: center; padding: 12px; border-bottom: 1px solid var(--border-color); }
+.prod-entry-row.header { font-weight: 600; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; background: var(--bg-surface-2); border-radius: var(--radius) var(--radius) 0 0; }
+.prod-entry-row:last-child { border-bottom: none; }
+.prod-entry-row.footer { font-weight: 600; background: var(--bg-surface-2); border-radius: 0 0 var(--radius) var(--radius); }
+.mobile-only { display: none; }
+@media (max-width: 640px) {
+  .prod-entry-container { gap: 16px; }
+  .prod-entry-row.header, .prod-entry-row.footer { display: none; }
+  .prod-entry-row { display: flex; flex-direction: column; background: var(--bg-surface-2); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px; gap: 12px; }
+  .prod-entry-row .size-label { font-size: 1.1rem; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 4px; color: var(--text-main); display: block; width: 100%; }
+  .mobile-only { display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
+  .input-group { width: 100%; display: flex; flex-direction: column; }
+}
+
+/* MOBILE RESPONSIVE CARD TABLES */
+@media (max-width: 768px) {
+  .card-table-mobile, .card-table-mobile thead, .card-table-mobile tbody, .card-table-mobile th, .card-table-mobile td, .card-table-mobile tr {
+    display: block;
+  }
+  .card-table-mobile thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+  .card-table-mobile tr {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    margin-bottom: 16px;
+    background: var(--bg-surface);
+    padding: 8px;
+  }
+  .card-table-mobile td {
+    border: none;
+    border-bottom: 1px solid var(--bg-surface-2);
+    position: relative;
+    padding-left: 45%;
+    text-align: right;
+    min-height: 40px;
+  }
+  .card-table-mobile td:last-child {
+    border-bottom: 0;
+  }
+  .card-table-mobile td:before {
+    position: absolute;
+    top: 13px;
+    left: 12px;
+    width: 40%;
+    padding-right: 10px;
+    white-space: nowrap;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    content: attr(data-label);
+  }
+}

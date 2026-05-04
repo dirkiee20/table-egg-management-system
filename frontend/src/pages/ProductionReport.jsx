@@ -16,23 +16,9 @@ const getOddEggCount = (record) => (
     .reduce((sum, value) => sum + ((Number(value) || 0) % EGGS_PER_TRAY), 0)
 );
 
-const buildEggSizesLabel = (record) => {
-  const details = [
-    `J: ${getTrayCount(record.jumbo)}`,
-    `ExL: ${getTrayCount(record.extralarge)}`,
-    `L: ${getTrayCount(record.large)}`,
-    `M: ${getTrayCount(record.medium)}`,
-    `S: ${getTrayCount(record.small)}`,
-    `P: ${getTrayCount(record.peewee)}`
-  ];
-  const oddEggs = getOddEggCount(record);
-
-  if (oddEggs > 0) {
-    details.push(`ODD: ${oddEggs}`);
-  }
-
-  return details.join(' | ');
-};
+const getRecordTotalTrays = (record) => (
+  ['jumbo', 'extralarge', 'large', 'medium', 'small', 'peewee'].reduce((sum, field) => sum + getTrayCount(record[field]), 0)
+);
 
 const formatFlockReference = (record, flock) => {
   if (!flock) {
@@ -91,7 +77,14 @@ const ProductionReport = () => {
             flockReference: formatFlockReference(record, flock),
             noOfHens: Number(record.henCount ?? flock?.quantity) || 0,
             mortality: Number(record.mortality) || 0,
-            eggSizes: buildEggSizesLabel(record),
+            jumbo: getTrayCount(record.jumbo),
+            extralarge: getTrayCount(record.extralarge),
+            large: getTrayCount(record.large),
+            medium: getTrayCount(record.medium),
+            small: getTrayCount(record.small),
+            peewee: getTrayCount(record.peewee),
+            totalTrays: getRecordTotalTrays(record),
+            oddEggs: getOddEggCount(record),
             cracked: Number(record.cracked) || 0,
             reject: Number(record.reject) || 0,
             feedConsumed: feedByDateAndFlock[feedKey] || 0,
@@ -184,7 +177,14 @@ const ProductionReport = () => {
       'Flock Reference',
       'No. of Hens',
       'Mortality',
-      'Egg Sizes',
+      'J Trays',
+      'ExL Trays',
+      'L Trays',
+      'M Trays',
+      'S Trays',
+      'P Trays',
+      'Total Trays',
+      'ODD Eggs',
       'Cracked',
       'Reject',
       'Feed Consumed (kg)',
@@ -196,7 +196,14 @@ const ProductionReport = () => {
       row.flockReference,
       row.noOfHens,
       row.mortality,
-      row.eggSizes,
+      row.jumbo,
+      row.extralarge,
+      row.large,
+      row.medium,
+      row.small,
+      row.peewee,
+      row.totalTrays,
+      row.oddEggs,
       row.cracked,
       row.reject,
       row.feedConsumed.toFixed(2),
@@ -316,14 +323,21 @@ const ProductionReport = () => {
         </div>
 
         <div className="table-responsive">
-          <table className="data-table">
+          <table className="data-table card-table-mobile">
             <thead>
               <tr>
                 <th>Date</th>
                 <th>Flock Reference</th>
                 <th className="text-right">No. of Hens</th>
                 <th className="text-right">Mortality</th>
-                <th>Egg Sizes</th>
+                <th className="text-right">J</th>
+                <th className="text-right">ExL</th>
+                <th className="text-right">L</th>
+                <th className="text-right">M</th>
+                <th className="text-right">S</th>
+                <th className="text-right">P</th>
+                <th className="text-right">Total Trays</th>
+                <th className="text-right">ODD</th>
                 <th className="text-right">Cracked</th>
                 <th className="text-right">Reject</th>
                 <th className="text-right">Feed Consumed (kg)</th>
@@ -333,27 +347,34 @@ const ProductionReport = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="9" style={{ textAlign: 'center', padding: '32px' }}>
+                  <td colSpan="16" style={{ textAlign: 'center', padding: '32px' }}>
                     <Loader2 className="spin" size={24} style={{ margin: '0 auto', color: 'var(--primary)' }} />
                   </td>
                 </tr>
               ) : filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan="9" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
+                  <td colSpan="16" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
                     No production records found for the selected range.
                   </td>
                 </tr>
               ) : filteredRows.map((row) => (
                 <tr key={row.id}>
-                  <td>{row.date}</td>
-                  <td className="font-medium">{row.flockReference}</td>
-                  <td className="text-right">{row.noOfHens.toLocaleString()}</td>
-                  <td className="text-right">{row.mortality.toLocaleString()}</td>
-                  <td style={{ minWidth: '280px' }}>{row.eggSizes}</td>
-                  <td className="text-right">{row.cracked.toLocaleString()}</td>
-                  <td className="text-right">{row.reject.toLocaleString()}</td>
-                  <td className="text-right">{row.feedConsumed.toFixed(2)}</td>
-                  <td className="text-sm text-muted">{row.remarks || '-'}</td>
+                  <td data-label="Date">{row.date}</td>
+                  <td data-label="Flock Ref" className="font-medium">{row.flockReference}</td>
+                  <td data-label="Hens" className="text-right">{row.noOfHens.toLocaleString()}</td>
+                  <td data-label="Mortality" className="text-right">{row.mortality.toLocaleString()}</td>
+                  <td data-label="Jumbo" className="text-right">{row.jumbo.toLocaleString()}</td>
+                  <td data-label="ExLarge" className="text-right">{row.extralarge.toLocaleString()}</td>
+                  <td data-label="Large" className="text-right">{row.large.toLocaleString()}</td>
+                  <td data-label="Medium" className="text-right">{row.medium.toLocaleString()}</td>
+                  <td data-label="Small" className="text-right">{row.small.toLocaleString()}</td>
+                  <td data-label="Peewee" className="text-right">{row.peewee.toLocaleString()}</td>
+                  <td data-label="Total Trays" className="text-right font-medium" style={{ color: '#16a34a' }}>{row.totalTrays.toLocaleString()}</td>
+                  <td data-label="Odd Eggs" className="text-right">{row.oddEggs.toLocaleString()}</td>
+                  <td data-label="Cracked" className="text-right">{row.cracked.toLocaleString()}</td>
+                  <td data-label="Reject" className="text-right">{row.reject.toLocaleString()}</td>
+                  <td data-label="Feed (kg)" className="text-right">{row.feedConsumed.toFixed(2)}</td>
+                  <td data-label="Remarks" className="text-sm text-muted">{row.remarks || '-'}</td>
                 </tr>
               ))}
             </tbody>
