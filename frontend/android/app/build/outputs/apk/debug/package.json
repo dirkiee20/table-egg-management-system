@@ -1,0 +1,12 @@
+{
+  "name": "table-egg-apk-server",
+  "version": "1.0.0",
+  "description": "Download server for Table Egg Management System APK",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

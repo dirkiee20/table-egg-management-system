@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Table Egg Management System</title>
+  <meta name="description" content="Manage your egg production, flocks, sales, and feed all in one powerful mobile app." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --yellow: #eab308;
+      --yellow-dark: #ca8a04;
+      --yellow-glow: rgba(234, 179, 8, 0.25);
+      --bg: #060c18;
+      --bg-2: #0d1628;
+      --bg-card: #111c30;
+      --border: rgba(255,255,255,0.08);
+      --text: #f1f5f9;
+      --muted: #64748b;
+      --muted-light: #94a3b8;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ── NAVBAR ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 48px;
+      background: rgba(6,12,24,0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1rem;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .nav-logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--yellow);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .nav-badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      background: rgba(234,179,8,0.15);
+      color: var(--yellow);
+      border: 1px solid rgba(234,179,8,0.3);
+      border-radius: 99px;
+      padding: 2px 10px;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-glow {
+      position: absolute;
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(234,179,8,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(234,179,8,0.1);
+      border: 1px solid rgba(234,179,8,0.25);
+      border-radius: 99px;
+      padding: 6px 16px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--yellow);
+      margin-bottom: 28px;
+      letter-spacing: 0.02em;
+    }
+
+    .hero-badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--yellow);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    h1 {
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      margin-bottom: 24px;
+      max-width: 800px;
+    }
+
+    h1 .highlight {
+      background: linear-gradient(135deg, #fbbf24, #eab308, #f59e0b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-desc {
+      color: var(--muted-light);
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      max-width: 560px;
+      margin: 0 auto 48px;
+      line-height: 1.7;
+      font-weight: 400;
+    }
+
+    /* ── DOWNLOAD BUTTON ── */
+    .download-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .btn-download {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      background: linear-gradient(135deg, #eab308, #ca8a04);
+      color: #0a0a0a;
+      font-family: 'Inter', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 16px;
+      padding: 18px 36px;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 0 40px rgba(234,179,8,0.4), 0 4px 20px rgba(0,0,0,0.3);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      letter-spacing: -0.01em;
+    }
+
+    .btn-download:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 0 60px rgba(234,179,8,0.55), 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .btn-download:active {
+      transform: translateY(0) scale(0.99);
+    }
+
+    .android-icon {
+      width: 26px;
+      height: 26px;
+      flex-shrink: 0;
+    }
+
+    .btn-meta {
+      font-size: 0.8rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-meta::before {
+      content: '🔒';
+    }
+
+    /* ── PHONE MOCKUP ── */
+    .phone-section {
+      display: flex;
+      justify-content: center;
+      padding: 0 24px 80px;
+    }
+
+    .phone-wrap {
+      position: relative;
+      width: 260px;
+    }
+
+    .phone-frame {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 40px;
+      padding: 16px;
+      box-shadow: 0 0 80px rgba(234,179,8,0.15), 0 40px 80px rgba(0,0,0,0.6);
+      position: relative;
+    }
+
+    .phone-screen {
+      background: var(--bg-2);
+      border-radius: 28px;
+      overflow: hidden;
+      aspect-ratio: 9/19;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .phone-notch {
+      height: 28px;
+      background: #060c18;
+      border-radius: 0 0 16px 16px;
+      margin: 0 auto;
+      width: 80px;
+    }
+
+    .phone-status {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px 4px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: var(--muted-light);
+    }
+
+    .phone-header {
+      background: #0f172a;
+      padding: 12px 16px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--yellow);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(234,179,8,0.15);
+    }
+
+    .phone-content {
+      flex: 1;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .phone-stat {
+      background: rgba(234,179,8,0.08);
+      border: 1px solid rgba(234,179,8,0.15);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    .phone-stat-label {
+      font-size: 0.55rem;
+      color: var(--muted-light);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .phone-stat-value {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--yellow);
+      margin-top: 2px;
+    }
+
+    .phone-stat-sub {
+      font-size: 0.5rem;
+      color: var(--muted);
+    }
+
+    .phone-bar {
+      background: rgba(255,255,255,0.04);
+      border-radius: 8px;
+      height: 4px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .phone-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--yellow), #f59e0b);
+      border-radius: 8px;
+    }
+
+    .phone-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    /* ── FEATURES ── */
+    .features {
+      padding: 80px 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--yellow);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+    }
+
+    .section-desc {
+      text-align: center;
+      color: var(--muted-light);
+      max-width: 500px;
+      margin: 0 auto 56px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(234,179,8,0.3);
+      box-shadow: 0 8px 32px rgba(234,179,8,0.08);
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      background: rgba(234,179,8,0.12);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 18px;
+      border: 1px solid rgba(234,179,8,0.2);
+    }
+
+    .feature-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .feature-desc {
+      font-size: 0.9rem;
+      color: var(--muted-light);
+      line-height: 1.65;
+    }
+
+    /* ── CTA BOTTOM ── */
+    .cta {
+      padding: 80px 24px 120px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-glow {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(ellipse at center bottom, rgba(234,179,8,0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cta h2 {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+    }
+
+    .cta p {
+      color: var(--muted-light);
+      max-width: 440px;
+      margin: 0 auto 40px;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    footer p {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .version-pill {
+      font-size: 0.75rem;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 4px 12px;
+      color: var(--muted-light);
+    }
+
+    /* divider */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 640px) {
+      nav { padding: 16px 20px; }
+      footer { flex-direction: column; align-items: center; text-align: center; padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-logo" href="#">
+      <div class="nav-logo-icon">🥚</div>
+      Table Egg MS
+    </a>
+    <span class="nav-badge">v1.0 · Android</span>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-glow"></div>
+
+    <div class="hero-badge">
+      <span class="hero-badge-dot"></span>
+      Now Available for Android
+    </div>
+
+    <h1>
+      Farm Management,<br/>
+      <span class="highlight">Right in Your Pocket</span>
+    </h1>
+
+    <p class="hero-desc">
+      Track egg production, manage flocks, record sales, monitor feed consumption — all from your Android phone, anytime.
+    </p>
+
+    <div class="download-group">
+      <a class="btn-download" id="download-btn" href="/download">
+        <!-- Android robot SVG -->
+        <svg class="android-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5S11 23.33 11 22.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V8H6v10zm-2.5-1C2.67 17 2 17.67 2 18.5v-7C2 10.67 2.67 10 3.5 10S5 10.67 5 11.5v7c0 .83-.67 1.5-1.5 1.5zm17 0c-.83 0-1.5-.67-1.5-1.5v-7c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v7c0 .83-.67 1.5-1.5 1.5zm-3.5-14.81L18.42 1.3A.5.5 0 0 0 17.72.6L16.24 2.08A6.97 6.97 0 0 0 12 .5c-1.55 0-2.98.51-4.14 1.36L6.38.58a.5.5 0 0 0-.7.7l1.43 1.43C5.99 3.88 5 5.58 5 7.5h14c0-1.82-.83-3.45-2-4.31zM10 5H9V4h1v1zm5 0h-1V4h1v1z" fill="currentColor"/>
+        </svg>
+        Download for Android
+      </a>
+      <p class="btn-meta">Free &amp; secure · APK · Android 6.0+</p>
+    </div>
+  </section>
+
+  <!-- PHONE MOCKUP -->
+  <section class="phone-section">
+    <div class="phone-wrap">
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="phone-notch"></div>
+          <div class="phone-status">
+            <span>9:41</span>
+            <span>📶 🔋</span>
+          </div>
+          <div class="phone-header">🥚 Dashboard</div>
+          <div class="phone-content">
+            <div class="phone-grid">
+              <div class="phone-stat">
+                <div class="phone-stat-label">Today's Eggs</div>
+                <div class="phone-stat-value">2,840</div>
+                <div class="phone-stat-sub">+4.2% vs yesterday</div>
+                <div class="phone-bar"><div class="phone-bar-fill" style="width:76%"></div></div>
+              </div>
+              <div class="phone-stat">
+                <div class="phone-stat-label">Active Flocks</div>
+                <div class="phone-stat-value">3</div>
+                <div class="phone-stat-sub">1,200 hens total</div>
+                <div class="phone-bar"><div class="phone-bar-fill" style="width:60%"></div></div>
+              </div>
+            </div>
+            <div class="phone-stat">
+              <div class="phone-stat-label">Weekly Sales</div>
+              <div class="phone-stat-value">₱12,450</div>
+              <div class="phone-stat-sub">94 trays sold this week</div>
+              <div class="phone-bar"><div class="phone-bar-fill" style="width:85%"></div></div>
+            </div>
+            <div class="phone-stat">
+              <div class="phone-stat-label">Feed Consumed</div>
+              <div class="phone-stat-value">320 kg</div>
+              <div class="phone-stat-sub">Today's total</div>
+              <div class="phone-bar"><div class="phone-bar-fill" style="width:55%"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- FEATURES -->
+  <section class="features">
+    <p class="section-label">Features</p>
+    <h2 class="section-title">Everything you need to<br/>run your farm</h2>
+    <p class="section-desc">A complete egg farm management system designed for daily operations on the go.</p>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🥚</div>
+        <div class="feature-title">Daily Egg Production</div>
+        <div class="feature-desc">Log production by size (Jumbo to Peewee) with tray and odd egg tracking per category, giving you accurate daily totals.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🐔</div>
+        <div class="feature-title">Flock Management</div>
+        <div class="feature-desc">Track all your flocks — hen count, batch ID, house, status, and mortality — with automated record keeping.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💰</div>
+        <div class="feature-title">Sales & Pricing</div>
+        <div class="feature-desc">Record egg sales by size grade, manage pricing per tray, and monitor your income with full transaction history.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌾</div>
+        <div class="feature-title">Feed Management</div>
+        <div class="feature-desc">Log daily feed consumption per flock, track feed types and quantities, and analyze feed efficiency over time.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <div class="feature-title">Reports & Analytics</div>
+        <div class="feature-desc">View daily, weekly, and monthly production reports. Export to CSV or print PDF summaries for your records.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📅</div>
+        <div class="feature-title">Farm Calendar</div>
+        <div class="feature-desc">Schedule and track farm events — vaccinations, hatchery dates, and general tasks — with a color-coded calendar view.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- CTA BOTTOM -->
+  <section class="cta">
+    <div class="cta-glow"></div>
+    <h2>Ready to modernize<br/>your farm?</h2>
+    <p>Download the app now and start managing your egg production smarter.</p>
+    <a class="btn-download" href="/download">
+      <svg class="android-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5S11 23.33 11 22.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V8H6v10zm-2.5-1C2.67 17 2 17.67 2 18.5v-7C2 10.67 2.67 10 3.5 10S5 10.67 5 11.5v7c0 .83-.67 1.5-1.5 1.5zm17 0c-.83 0-1.5-.67-1.5-1.5v-7c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v7c0 .83-.67 1.5-1.5 1.5zm-3.5-14.81L18.42 1.3A.5.5 0 0 0 17.72.6L16.24 2.08A6.97 6.97 0 0 0 12 .5c-1.55 0-2.98.51-4.14 1.36L6.38.58a.5.5 0 0 0-.7.7l1.43 1.43C5.99 3.88 5 5.58 5 7.5h14c0-1.82-.83-3.45-2-4.31zM10 5H9V4h1v1zm5 0h-1V4h1v1z" fill="currentColor"/>
+      </svg>
+      Download for Android
+    </a>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>&copy; 2026 Table Egg Management System. All rights reserved.</p>
+    <span class="version-pill">v1.0.0 · Debug Build</span>
+  </footer>
+
+</body>
+</html>
