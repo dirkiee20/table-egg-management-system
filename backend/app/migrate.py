@@ -105,6 +105,26 @@ def run_migrations(db_path: Path | None = None):
     except Exception as error:
         print("Error creating feed_consumption table:", error)
 
+    try:
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS payment_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sale_id INTEGER NOT NULL,
+                amount_paid FLOAT NOT NULL,
+                balance_before FLOAT NOT NULL,
+                balance_after FLOAT NOT NULL,
+                payment_date VARCHAR NOT NULL,
+                notes VARCHAR,
+                recorded_by VARCHAR,
+                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        print("Ensured payment_history table exists")
+    except Exception as error:
+        print("Error creating payment_history table:", error)
+
     conn.commit()
     conn.close()
     print(f"Migration completed for {active_db_path}")

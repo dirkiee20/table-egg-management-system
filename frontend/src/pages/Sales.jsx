@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, CheckCircle2, CircleDollarSign, PlusCircle, Trash2, X, Loader2, AlertCircle } from 'lucide-react';
+import { FileText, CheckCircle2, CircleDollarSign, PlusCircle, Trash2, X, Loader2, AlertCircle, History, CreditCard } from 'lucide-react';
 import { api } from '../services/api';
 import '../App.css';
 
@@ -37,6 +37,21 @@ const Sales = () => {
   const [errorMarker, setErrorMarker] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Payment modal state
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [paymentSale, setPaymentSale] = useState(null);
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+  const [paymentNotes, setPaymentNotes] = useState('');
+  const [isPaymentSubmitting, setIsPaymentSubmitting] = useState(false);
+  const [paymentError, setPaymentError] = useState(null);
+
+  // Payment history modal state
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [historySale, setHistorySale] = useState(null);
+  const [paymentHistory, setPaymentHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   
   // Point of Sale Form State
   const [customerName, setCustomerName] = useState('');
@@ -79,6 +94,49 @@ const Sales = () => {
       setErrorMarker("Failed to retrieve sales ledger.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openPaymentModal = (sale) => {
+    setPaymentSale(sale);
+    setPaymentAmount('');
+    setPaymentDate(new Date().toISOString().split('T')[0]);
+    setPaymentNotes('');
+    setPaymentError(null);
+    setIsPaymentModalOpen(true);
+  };
+
+  const handleRecordPayment = async (e) => {
+    e.preventDefault();
+    setIsPaymentSubmitting(true);
+    setPaymentError(null);
+    try {
+      await api.sales.recordPayment(paymentSale.id, {
+        amount_paid: Number(paymentAmount),
+        payment_date: paymentDate,
+        notes: paymentNotes || null
+      });
+      await loadSales();
+      setIsPaymentModalOpen(false);
+    } catch (err) {
+      setPaymentError(err.message || 'Failed to record payment.');
+    } finally {
+      setIsPaymentSubmitting(false);
+    }
+  };
+
+  const openHistoryModal = async (sale) => {
+    setHistorySale(sale);
+    setPaymentHistory([]);
+    setIsHistoryModalOpen(true);
+    setHistoryLoading(true);
+    try {
+      const data = await api.sales.getPayments(sale.id);
+      setPaymentHistory(data);
+    } catch (err) {
+      setPaymentHistory([]);
+    } finally {
+      setHistoryLoading(false);
     }
   };
 
@@ -293,6 +351,16 @@ const Sales = () => {
                     <button className="action-btn edit" onClick={() => openForm(sale)} title="Edit Sale">
                       <FileText size={16} />
                     </button>
+                    {sale.balance > 0 && (
+                      <button className="action-btn" onClick={() => openPaymentModal(sale)} title="Record Payment"
+                        style={{ color: '#b45309', background: '#fef3c7', border: '1px solid #fde68a' }}>
+                        <CreditCard size={16} />
+                      </button>
+                    )}
+                    <button className="action-btn" onClick={() => openHistoryModal(sale)} title="Payment History"
+                      style={{ color: 'var(--primary)', background: 'var(--primary-bg)', border: '1px solid var(--primary-light)' }}>
+                      <History size={16} />
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -300,6 +368,156 @@ const Sales = () => {
           </table>
         </div>
       </div>
+
+      {/* Record Payment Modal */}
+      {isPaymentModalOpen && paymentSale && (
+        <div className="modal-overlay" onClick={() => !isPaymentSubmitting && setIsPaymentModalOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px' }}>
+            <div className="modal-header">
+              <h3><CreditCard size={18} style={{ marginRight: '8px', verticalAlign: 'middle' }} />Record Payment</h3>
+              <button className="close-btn" onClick={() => !isPaymentSubmitting && setIsPaymentModalOpen(false)}><X size={20} /></button>
+            </div>
+
+            <div style={{ background: '#f8fafc', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px', border: '1px solid #e2e8f0' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>INV-{paymentSale.id} — {paymentSale.customer_name || paymentSale.customer}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.875rem', color: 'var(--text-main)' }}>Invoice Total</span>
+                <span style={{ fontWeight: '600' }}>₱{paymentSale.total?.toFixed(2)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                <span style={{ fontSize: '0.875rem', color: 'var(--danger)' }}>Outstanding Balance</span>
+                <span style={{ fontWeight: '700', color: 'var(--danger)' }}>₱{(paymentSale.balance || 0).toFixed(2)}</span>
+              </div>
+            </div>
+
+            {paymentError && (
+              <div className="alert alert-error" style={{ margin: '0 0 16px' }}>
+                <AlertCircle size={16} style={{ flexShrink: 0 }} /> {paymentError}
+              </div>
+            )}
+
+            <form onSubmit={handleRecordPayment} className="standard-form">
+              <div className="form-group">
+                <label>Amount Paid (₱)</label>
+                <input
+                  type="number" min="0.01" step="0.01" required
+                  placeholder={`Max ₱${(paymentSale.balance || 0).toFixed(2)}`}
+                  value={paymentAmount}
+                  onChange={e => setPaymentAmount(e.target.value)}
+                  disabled={isPaymentSubmitting}
+                />
+              </div>
+              <div className="form-group">
+                <label>Payment Date</label>
+                <input type="date" required value={paymentDate} onChange={e => setPaymentDate(e.target.value)} disabled={isPaymentSubmitting} />
+              </div>
+              <div className="form-group">
+                <label>Notes (optional)</label>
+                <input type="text" placeholder="e.g. Cash payment, GCash, etc." value={paymentNotes} onChange={e => setPaymentNotes(e.target.value)} disabled={isPaymentSubmitting} />
+              </div>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '8px' }}>
+                <button type="button" className="btn-secondary" onClick={() => setIsPaymentModalOpen(false)} disabled={isPaymentSubmitting}>Cancel</button>
+                <button type="submit" className="btn-primary" disabled={isPaymentSubmitting}>
+                  {isPaymentSubmitting ? <Loader2 className="spin" size={16} /> : <CheckCircle2 size={16} />}
+                  {isPaymentSubmitting ? 'Saving...' : 'Save Payment'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Payment History Modal */}
+      {isHistoryModalOpen && historySale && (
+        <div className="modal-overlay" onClick={() => setIsHistoryModalOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '560px' }}>
+            <div className="modal-header">
+              <h3><History size={18} style={{ marginRight: '8px', verticalAlign: 'middle' }} />Payment History</h3>
+              <button className="close-btn" onClick={() => setIsHistoryModalOpen(false)}><X size={20} /></button>
+            </div>
+
+            <div style={{ background: '#f8fafc', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px', border: '1px solid #e2e8f0' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px' }}>INV-{historySale.id}</div>
+              <div style={{ fontWeight: '600', fontSize: '1rem', color: 'var(--text-main)' }}>{historySale.customer_name || historySale.customer}</div>
+              <div style={{ display: 'flex', gap: '24px', marginTop: '8px', flexWrap: 'wrap' }}>
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Invoice Total</div>
+                  <div style={{ fontWeight: '600' }}>₱{historySale.total?.toFixed(2)}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Current Balance</div>
+                  <div style={{ fontWeight: '600', color: historySale.balance > 0 ? 'var(--danger)' : 'var(--success)' }}>
+                    ₱{(historySale.balance || 0).toFixed(2)}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Status</div>
+                  <div>
+                    {historySale.status === 'Paid' ? (
+                      <span className="badge badge-success"><CheckCircle2 size={11} /> PAID</span>
+                    ) : historySale.status === 'Partial' ? (
+                      <span className="badge" style={{ backgroundColor: '#fef3c7', color: '#b45309' }}>PARTIAL</span>
+                    ) : (
+                      <span className="badge badge-error">UNPAID</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {historyLoading ? (
+              <div style={{ textAlign: 'center', padding: '32px' }}>
+                <Loader2 className="spin" size={24} style={{ margin: '0 auto', color: 'var(--primary)' }} />
+              </div>
+            ) : paymentHistory.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                No payment records yet for this invoice.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {paymentHistory.map((entry, idx) => (
+                  <div key={entry.id} style={{
+                    display: 'flex', alignItems: 'flex-start', gap: '12px',
+                    padding: '12px 14px', borderRadius: '8px',
+                    background: idx % 2 === 0 ? '#f8fafc' : '#fff',
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    <div style={{
+                      width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
+                      background: 'var(--success-bg)', color: 'var(--success)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '700'
+                    }}>
+                      {idx + 1}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                        <span style={{ fontWeight: '700', color: 'var(--success)', fontSize: '1rem' }}>+₱{entry.amount_paid?.toFixed(2)}</span>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{entry.payment_date}</span>
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                        Balance: <span style={{ color: 'var(--danger)', fontWeight: '500' }}>₱{entry.balance_before?.toFixed(2)}</span>
+                        {' → '}
+                        <span style={{ color: entry.balance_after === 0 ? 'var(--success)' : 'var(--danger)', fontWeight: '500' }}>₱{entry.balance_after?.toFixed(2)}</span>
+                      </div>
+                      {entry.notes && <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px', fontStyle: 'italic' }}>{entry.notes}</div>}
+                      {entry.recorded_by && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>Recorded by: {entry.recorded_by}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              {historySale.balance > 0 && (
+                <button className="btn-primary" onClick={() => { setIsHistoryModalOpen(false); openPaymentModal(historySale); }}>
+                  <CreditCard size={16} /> Record Payment
+                </button>
+              )}
+              <button className="btn-secondary" onClick={() => setIsHistoryModalOpen(false)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isModalOpen && (
         <div className="modal-overlay" onClick={() => !isSubmitting && setIsModalOpen(false)}>

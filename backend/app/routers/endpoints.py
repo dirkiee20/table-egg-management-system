@@ -431,3 +431,66 @@ def create_feed_consumption(feed: schemas.FeedConsumptionCreate, db: Session = D
 def forecast_feed(flock_id: str, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     from app.forecast import generate_feed_forecast
     return generate_feed_forecast(flock_id, db)
+
+# --- PAYMENT HISTORY ---
+from app.models import PaymentHistory
+
+@router.get("/sales/{sale_id}/payments", response_model=list[schemas.PaymentHistoryResponse])
+def get_payment_history(sale_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    sale = db.query(Sale).filter(Sale.id == sale_id).first()
+    if not sale:
+        raise HTTPException(status_code=404, detail="Sale not found")
+    return db.query(PaymentHistory).filter(PaymentHistory.sale_id == sale_id).order_by(PaymentHistory.createdAt.asc()).all()
+
+@router.post("/sales/{sale_id}/payments", response_model=schemas.PaymentHistoryResponse)
+def record_payment(sale_id: int, payment: schemas.PaymentHistoryCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    sale = db.query(Sale).filter(Sale.id == sale_id).first()
+    if not sale:
+        raise HTTPException(status_code=404, detail="Sale not found")
+
+    if sale.balance <= 0:
+        raise HTTPException(status_code=400, detail="This invoice is already fully paid")
+
+    if payment.amount_paid <= 0:
+        raise HTTPException(status_code=400, detail="Payment amount must be greater than zero")
+
+    if payment.amount_paid > sale.balance:
+        raise HTTPException(status_code=400, detail=f"Payment amount exceeds outstanding balance of ₱{sale.balance:.2f}")
+
+    balance_before = sale.balance
+    balance_after = round(max(0.0, sale.balance - payment.amount_paid), 2)
+
+    # Record the payment history entry
+    history_entry = PaymentHistory(
+        sale_id=sale_id,
+        amount_paid=payment.amount_paid,
+        balance_before=balance_before,
+        balance_after=balance_after,
+        payment_date=payment.payment_date,
+        notes=payment.notes,
+        recorded_by=get_inventory_actor_label(current_user)
+    )
+    db.add(history_entry)
+
+    # Update the sale balance and status
+    sale.balance = balance_after
+    if balance_after == 0:
+        sale.status = "Paid"
+    elif balance_after < sale.total:
+        sale.status = "Partial"
+
+    # Create an income record for this payment
+    inc = Income(
+        source=sale.customer_name or sale.customer,
+        referenceType="Sales Invoice",
+        referenceId=sale.id,
+        amount=payment.amount_paid,
+        date=payment.payment_date,
+        category="Egg Sales",
+        notes=f"Payment for INV-{sale.id}" + (f" — {payment.notes}" if payment.notes else "")
+    )
+    db.add(inc)
+
+    db.commit()
+    db.refresh(history_entry)
+    return history_entry

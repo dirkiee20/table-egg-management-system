@@ -207,3 +207,21 @@ class FeedConsumptionResponse(FeedConsumptionBase):
     id: int
     createdAt: datetime
     class Config: from_attributes = True
+
+# Payment History
+class PaymentHistoryCreate(BaseModel):
+    amount_paid: float
+    payment_date: str
+    notes: Optional[str] = None
+
+class PaymentHistoryResponse(BaseModel):
+    id: int
+    sale_id: int
+    amount_paid: float
+    balance_before: float
+    balance_after: float
+    payment_date: str
+    notes: Optional[str] = None
+    recorded_by: Optional[str] = None
+    createdAt: Optional[datetime] = None
+    class Config: from_attributes = True

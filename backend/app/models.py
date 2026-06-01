@@ -146,3 +146,15 @@ class FeedConsumption(Base):
     flockId = Column(String)
     feedConsumedKgs = Column(Float)
     createdAt = Column(DateTime, default=datetime.utcnow)
+
+class PaymentHistory(Base):
+    __tablename__ = "payment_history"
+    id = Column(Integer, primary_key=True, index=True)
+    sale_id = Column(Integer, nullable=False, index=True)
+    amount_paid = Column(Float, nullable=False)
+    balance_before = Column(Float, nullable=False)
+    balance_after = Column(Float, nullable=False)
+    payment_date = Column(String, nullable=False)
+    notes = Column(String, nullable=True)
+    recorded_by = Column(String, nullable=True)
+    createdAt = Column(DateTime, default=datetime.utcnow)

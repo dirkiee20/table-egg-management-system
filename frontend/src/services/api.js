@@ -71,7 +71,9 @@ export const api = {
   sales: {
     getAll: () => apiClient('/sales'),
     create: (data) => apiClient('/sales', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id, data) => apiClient(`/sales/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+    update: (id, data) => apiClient(`/sales/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    getPayments: (id) => apiClient(`/sales/${id}/payments`),
+    recordPayment: (id, data) => apiClient(`/sales/${id}/payments`, { method: 'POST', body: JSON.stringify(data) })
   },
   income: {
     getAll: () => apiClient('/income'),
