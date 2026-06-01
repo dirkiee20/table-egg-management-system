@@ -117,7 +117,7 @@ const Sales = () => {
       if (newBalance === 0) newStatus = 'Paid';
       else if (newBalance < paymentSale.total) newStatus = 'Partial';
 
-      // Build the full sale payload required by PUT /sales/{id}
+      // Use the existing PUT /sales/{id} endpoint — backend now auto-creates history
       const payload = {
         customer_name: paymentSale.customer_name || paymentSale.customer,
         customer: paymentSale.customer || paymentSale.customer_name,
@@ -140,23 +140,22 @@ const Sales = () => {
 
       await api.sales.update(paymentSale.id, payload);
 
-      // Reload the full sales list and sync stale references
+      // Reload the full sales list
       const freshSales = await api.sales.getAll();
       setSales(freshSales);
       const freshSale = freshSales.find(s => s.id === paymentSale.id);
 
-      // If the history modal is open for the same invoice, refresh it too
-      if (isHistoryModalOpen && historySale?.id === paymentSale.id) {
-        if (freshSale) setHistorySale(freshSale);
-        setHistoryLoading(true);
-        try {
-          const history = await api.sales.getPayments(paymentSale.id);
+      // Always refresh history for this invoice
+      const saleIdToRefresh = paymentSale.id;
+      try {
+        const history = await api.sales.getPayments(saleIdToRefresh);
+        // If history modal is open for this invoice, update it live
+        if (isHistoryModalOpen && historySale?.id === saleIdToRefresh) {
+          if (freshSale) setHistorySale(freshSale);
           setPaymentHistory(history);
-        } catch (_) {
-          // New endpoint may not be on Railway yet — silently ignore
-        } finally {
-          setHistoryLoading(false);
         }
+      } catch (_) {
+        // history endpoint not yet available — ignore
       }
 
       setIsPaymentModalOpen(false);
@@ -180,6 +179,7 @@ const Sales = () => {
       const data = await api.sales.getPayments(freshSale.id);
       setPaymentHistory(data);
     } catch (err) {
+      console.error('Failed to load payment history:', err);
       setPaymentHistory([]);
     } finally {
       setHistoryLoading(false);

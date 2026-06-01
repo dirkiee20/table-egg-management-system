@@ -192,16 +192,20 @@ def update_sale(sale_id: int, sale: schemas.SaleCreate, db: Session = Depends(ge
     if size_tray_total:
         sale.traysSold = size_tray_total
 
-    # Detect a balance reduction — treat it as a payment and record history
-    old_balance = existing_sale.balance or 0.0
-    new_balance = sale.balance if sale.balance is not None else old_balance
+    # Capture values BEFORE overwriting existing_sale
+    old_balance = float(existing_sale.balance or 0.0)
+    new_balance = float(sale.balance if sale.balance is not None else old_balance)
     payment_amount = round(old_balance - new_balance, 2)
+    customer_label = existing_sale.customer_name or existing_sale.customer or sale.customer_name or sale.customer
+    actor = get_inventory_actor_label(current_user)
 
+    # Now overwrite the sale fields
     for key, value in sale.dict().items():
         setattr(existing_sale, key, value)
     if not existing_sale.staff_incharge:
-        existing_sale.staff_incharge = get_inventory_actor_label(current_user)
+        existing_sale.staff_incharge = actor
 
+    # If balance decreased, record a payment history entry
     if payment_amount > 0:
         from app.models import PaymentHistory
         history_entry = PaymentHistory(
@@ -210,20 +214,19 @@ def update_sale(sale_id: int, sale: schemas.SaleCreate, db: Session = Depends(ge
             balance_before=old_balance,
             balance_after=max(0.0, new_balance),
             payment_date=sale.date,
-            notes="Payment recorded via invoice edit",
-            recorded_by=get_inventory_actor_label(current_user)
+            notes="Payment recorded",
+            recorded_by=actor
         )
         db.add(history_entry)
 
-        # Also create an income record for this payment
         inc = Income(
-            source=existing_sale.customer_name or existing_sale.customer,
+            source=customer_label,
             referenceType="Sales Invoice",
             referenceId=sale_id,
             amount=payment_amount,
             date=sale.date,
             category="Egg Sales",
-            notes=f"Payment for INV-{sale_id} (via edit)"
+            notes=f"Payment for INV-{sale_id}"
         )
         db.add(inc)
 
@@ -463,17 +466,18 @@ def forecast_feed(flock_id: str, db: Session = Depends(get_db), _: User = Depend
     return generate_feed_forecast(flock_id, db)
 
 # --- PAYMENT HISTORY ---
-from app.models import PaymentHistory
 
 @router.get("/sales/{sale_id}/payments", response_model=list[schemas.PaymentHistoryResponse])
 def get_payment_history(sale_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     sale = db.query(Sale).filter(Sale.id == sale_id).first()
     if not sale:
         raise HTTPException(status_code=404, detail="Sale not found")
-    return db.query(PaymentHistory).filter(PaymentHistory.sale_id == sale_id).order_by(PaymentHistory.createdAt.asc()).all()
+    from app.models import PaymentHistory
+    return db.query(PaymentHistory).filter(PaymentHistory.sale_id == sale_id).order_by(PaymentHistory.id.asc()).all()
 
 @router.post("/sales/{sale_id}/payments", response_model=schemas.PaymentHistoryResponse)
 def record_payment(sale_id: int, payment: schemas.PaymentHistoryCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    from app.models import PaymentHistory
     sale = db.query(Sale).filter(Sale.id == sale_id).first()
     if not sale:
         raise HTTPException(status_code=404, detail="Sale not found")
