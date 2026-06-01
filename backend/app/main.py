@@ -43,7 +43,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 # Core modules router
 app.include_router(endpoints.router, prefix="/api", tags=["Core Modules"])
 
-@router.get("/")
+@app.get("/")
 def read_root():
     return {"status": "Backend is running actively", "docs": "Visit /docs for OpenAPI specifications"}
 
