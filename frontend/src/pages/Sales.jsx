@@ -112,36 +112,48 @@ const Sales = () => {
     setPaymentError(null);
     try {
       const amountNum = Number(paymentAmount);
+      console.log('[PAYMENT] Recording payment:', {
+        saleId: paymentSale.id,
+        amount: amountNum,
+        date: paymentDate,
+        notes: paymentNotes,
+        currentBalance: paymentSale.balance
+      });
 
       // Use the dedicated POST /sales/{id}/payments endpoint
-      await api.sales.recordPayment(paymentSale.id, {
+      const result = await api.sales.recordPayment(paymentSale.id, {
         amount_paid: amountNum,
         payment_date: paymentDate,
         notes: paymentNotes || null
       });
+      
+      console.log('[PAYMENT] Payment recorded successfully:', result);
 
       // Reload the full sales list
       const freshSales = await api.sales.getAll();
       setSales(freshSales);
       const freshSale = freshSales.find(s => s.id === paymentSale.id);
+      console.log('[PAYMENT] Fresh sale data:', freshSale);
 
       // Always refresh history for this invoice
       const saleIdToRefresh = paymentSale.id;
       try {
         const history = await api.sales.getPayments(saleIdToRefresh);
+        console.log('[PAYMENT] Payment history:', history);
         // If history modal is open for this invoice, update it live
         if (isHistoryModalOpen && historySale?.id === saleIdToRefresh) {
           if (freshSale) setHistorySale(freshSale);
           setPaymentHistory(history);
         }
-      } catch (_) {
-        // history endpoint not yet available — ignore
+      } catch (err) {
+        console.error('[PAYMENT] Failed to fetch history:', err);
       }
 
       setIsPaymentModalOpen(false);
       setPaymentAmount('');
       setPaymentNotes('');
     } catch (err) {
+      console.error('[PAYMENT ERROR]', err);
       setPaymentError(err.message || 'Failed to record payment.');
     } finally {
       setIsPaymentSubmitting(false);
@@ -149,6 +161,7 @@ const Sales = () => {
   };
 
   const openHistoryModal = async (sale) => {
+    console.log('[HISTORY] Opening history modal for sale:', sale.id);
     // Always use the freshest copy from the sales list
     const freshSale = sales.find(s => s.id === sale.id) || sale;
     setHistorySale(freshSale);
@@ -157,9 +170,10 @@ const Sales = () => {
     setHistoryLoading(true);
     try {
       const data = await api.sales.getPayments(freshSale.id);
+      console.log('[HISTORY] Loaded payment history:', data);
       setPaymentHistory(data);
     } catch (err) {
-      console.error('Failed to load payment history:', err);
+      console.error('[HISTORY ERROR] Failed to load payment history:', err);
       setPaymentHistory([]);
     } finally {
       setHistoryLoading(false);

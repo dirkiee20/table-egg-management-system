@@ -473,29 +473,47 @@ def forecast_feed(flock_id: str, db: Session = Depends(get_db), _: User = Depend
 
 @router.get("/sales/{sale_id}/payments", response_model=list[schemas.PaymentHistoryResponse])
 def get_payment_history(sale_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    print(f"[HISTORY] Fetching payment history for sale {sale_id}")
     sale = db.query(Sale).filter(Sale.id == sale_id).first()
     if not sale:
+        print(f"[HISTORY ERROR] Sale {sale_id} not found")
         raise HTTPException(status_code=404, detail="Sale not found")
-    return db.query(PaymentHistory).filter(PaymentHistory.sale_id == sale_id).order_by(PaymentHistory.id.asc()).all()
+    
+    history = db.query(PaymentHistory).filter(PaymentHistory.sale_id == sale_id).order_by(PaymentHistory.id.asc()).all()
+    print(f"[HISTORY] Found {len(history)} payment records for sale {sale_id}")
+    for h in history:
+        print(f"[HISTORY]   - Payment {h.id}: amount={h.amount_paid}, date={h.payment_date}, balance_after={h.balance_after}")
+    return history
 
 @router.post("/sales/{sale_id}/payments", response_model=schemas.PaymentHistoryResponse)
 def record_payment(sale_id: int, payment: schemas.PaymentHistoryCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    print(f"[PAYMENT] Starting payment recording for sale {sale_id}")
+    print(f"[PAYMENT] Payment data: amount={payment.amount_paid}, date={payment.payment_date}, notes={payment.notes}")
+    
     sale = db.query(Sale).filter(Sale.id == sale_id).first()
     if not sale:
+        print(f"[PAYMENT ERROR] Sale {sale_id} not found")
         raise HTTPException(status_code=404, detail="Sale not found")
 
+    print(f"[PAYMENT] Current sale balance: {sale.balance}")
+    
     if sale.balance <= 0:
+        print(f"[PAYMENT ERROR] Sale {sale_id} already fully paid")
         raise HTTPException(status_code=400, detail="This invoice is already fully paid")
 
     if payment.amount_paid <= 0:
+        print(f"[PAYMENT ERROR] Invalid payment amount: {payment.amount_paid}")
         raise HTTPException(status_code=400, detail="Payment amount must be greater than zero")
 
     if payment.amount_paid > sale.balance:
+        print(f"[PAYMENT ERROR] Payment {payment.amount_paid} exceeds balance {sale.balance}")
         raise HTTPException(status_code=400, detail=f"Payment amount exceeds outstanding balance of ₱{sale.balance:.2f}")
 
     balance_before = sale.balance
     balance_after = round(max(0.0, sale.balance - payment.amount_paid), 2)
 
+    print(f"[PAYMENT] Creating PaymentHistory: balance_before={balance_before}, balance_after={balance_after}")
+    
     # Record the payment history entry
     history_entry = PaymentHistory(
         sale_id=sale_id,
@@ -507,6 +525,7 @@ def record_payment(sale_id: int, payment: schemas.PaymentHistoryCreate, db: Sess
         recorded_by=get_inventory_actor_label(current_user)
     )
     db.add(history_entry)
+    print(f"[PAYMENT] PaymentHistory entry added to session")
 
     # Update the sale balance and status
     sale.balance = balance_after
@@ -514,6 +533,8 @@ def record_payment(sale_id: int, payment: schemas.PaymentHistoryCreate, db: Sess
         sale.status = "Paid"
     elif balance_after < sale.total:
         sale.status = "Partial"
+    
+    print(f"[PAYMENT] Updated sale status to: {sale.status}, new balance: {sale.balance}")
 
     # Create an income record for this payment
     inc = Income(
@@ -526,7 +547,16 @@ def record_payment(sale_id: int, payment: schemas.PaymentHistoryCreate, db: Sess
         notes=f"Payment for INV-{sale.id}" + (f" — {payment.notes}" if payment.notes else "")
     )
     db.add(inc)
+    print(f"[PAYMENT] Income record added to session")
 
-    db.commit()
+    try:
+        db.commit()
+        print(f"[PAYMENT SUCCESS] Transaction committed for sale {sale_id}")
+    except Exception as e:
+        print(f"[PAYMENT ERROR] Commit failed: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    
     db.refresh(history_entry)
+    print(f"[PAYMENT] Returning history entry with id={history_entry.id}")
     return history_entry
