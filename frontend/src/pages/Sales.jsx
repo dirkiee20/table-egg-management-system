@@ -111,13 +111,57 @@ const Sales = () => {
     setIsPaymentSubmitting(true);
     setPaymentError(null);
     try {
-      await api.sales.recordPayment(paymentSale.id, {
-        amount_paid: Number(paymentAmount),
-        payment_date: paymentDate,
-        notes: paymentNotes || null
-      });
-      await loadSales();
+      const amountNum = Number(paymentAmount);
+      const newBalance = Math.max(0, (paymentSale.balance || 0) - amountNum);
+      let newStatus = 'Unpaid';
+      if (newBalance === 0) newStatus = 'Paid';
+      else if (newBalance < paymentSale.total) newStatus = 'Partial';
+
+      // Build the full sale payload required by PUT /sales/{id}
+      const payload = {
+        customer_name: paymentSale.customer_name || paymentSale.customer,
+        customer: paymentSale.customer || paymentSale.customer_name,
+        contact_no: paymentSale.contact_no || '',
+        address: paymentSale.address || '',
+        date: paymentDate,
+        traysSold: paymentSale.traysSold,
+        jumbo: paymentSale.jumbo || 0,
+        extralarge: paymentSale.extralarge || 0,
+        large: paymentSale.large || 0,
+        medium: paymentSale.medium || 0,
+        small: paymentSale.small || 0,
+        peewee: paymentSale.peewee || 0,
+        pricePerTray: paymentSale.pricePerTray,
+        total: paymentSale.total,
+        balance: Number(newBalance.toFixed(2)),
+        status: newStatus,
+        staff_incharge: paymentSale.staff_incharge || '',
+      };
+
+      await api.sales.update(paymentSale.id, payload);
+
+      // Reload the full sales list and sync stale references
+      const freshSales = await api.sales.getAll();
+      setSales(freshSales);
+      const freshSale = freshSales.find(s => s.id === paymentSale.id);
+
+      // If the history modal is open for the same invoice, refresh it too
+      if (isHistoryModalOpen && historySale?.id === paymentSale.id) {
+        if (freshSale) setHistorySale(freshSale);
+        setHistoryLoading(true);
+        try {
+          const history = await api.sales.getPayments(paymentSale.id);
+          setPaymentHistory(history);
+        } catch (_) {
+          // New endpoint may not be on Railway yet — silently ignore
+        } finally {
+          setHistoryLoading(false);
+        }
+      }
+
       setIsPaymentModalOpen(false);
+      setPaymentAmount('');
+      setPaymentNotes('');
     } catch (err) {
       setPaymentError(err.message || 'Failed to record payment.');
     } finally {
@@ -126,12 +170,14 @@ const Sales = () => {
   };
 
   const openHistoryModal = async (sale) => {
-    setHistorySale(sale);
+    // Always use the freshest copy from the sales list
+    const freshSale = sales.find(s => s.id === sale.id) || sale;
+    setHistorySale(freshSale);
     setPaymentHistory([]);
     setIsHistoryModalOpen(true);
     setHistoryLoading(true);
     try {
-      const data = await api.sales.getPayments(sale.id);
+      const data = await api.sales.getPayments(freshSale.id);
       setPaymentHistory(data);
     } catch (err) {
       setPaymentHistory([]);
@@ -509,7 +555,7 @@ const Sales = () => {
 
             <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
               {historySale.balance > 0 && (
-                <button className="btn-primary" onClick={() => { setIsHistoryModalOpen(false); openPaymentModal(historySale); }}>
+                <button className="btn-primary" onClick={() => openPaymentModal(historySale)}>
                   <CreditCard size={16} /> Record Payment
                 </button>
               )}

@@ -191,12 +191,42 @@ def update_sale(sale_id: int, sale: schemas.SaleCreate, db: Session = Depends(ge
     size_tray_total = sum(get_sale_size_trays(sale).values())
     if size_tray_total:
         sale.traysSold = size_tray_total
-        
+
+    # Detect a balance reduction — treat it as a payment and record history
+    old_balance = existing_sale.balance or 0.0
+    new_balance = sale.balance if sale.balance is not None else old_balance
+    payment_amount = round(old_balance - new_balance, 2)
+
     for key, value in sale.dict().items():
         setattr(existing_sale, key, value)
     if not existing_sale.staff_incharge:
         existing_sale.staff_incharge = get_inventory_actor_label(current_user)
-        
+
+    if payment_amount > 0:
+        from app.models import PaymentHistory
+        history_entry = PaymentHistory(
+            sale_id=sale_id,
+            amount_paid=payment_amount,
+            balance_before=old_balance,
+            balance_after=max(0.0, new_balance),
+            payment_date=sale.date,
+            notes="Payment recorded via invoice edit",
+            recorded_by=get_inventory_actor_label(current_user)
+        )
+        db.add(history_entry)
+
+        # Also create an income record for this payment
+        inc = Income(
+            source=existing_sale.customer_name or existing_sale.customer,
+            referenceType="Sales Invoice",
+            referenceId=sale_id,
+            amount=payment_amount,
+            date=sale.date,
+            category="Egg Sales",
+            notes=f"Payment for INV-{sale_id} (via edit)"
+        )
+        db.add(inc)
+
     db.commit()
     db.refresh(existing_sale)
     return existing_sale
