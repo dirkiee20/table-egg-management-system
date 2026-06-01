@@ -199,6 +199,8 @@ def update_sale(sale_id: int, sale: schemas.SaleCreate, db: Session = Depends(ge
     customer_label = existing_sale.customer_name or existing_sale.customer or sale.customer_name or sale.customer
     actor = get_inventory_actor_label(current_user)
 
+    print(f"[DEBUG] Sale {sale_id}: old_balance={old_balance}, new_balance={new_balance}, payment_amount={payment_amount}")
+
     # Now overwrite the sale fields
     for key, value in sale.dict().items():
         setattr(existing_sale, key, value)
@@ -207,6 +209,7 @@ def update_sale(sale_id: int, sale: schemas.SaleCreate, db: Session = Depends(ge
 
     # If balance decreased, record a payment history entry
     if payment_amount > 0:
+        print(f"[DEBUG] Creating PaymentHistory entry for sale {sale_id}")
         history_entry = PaymentHistory(
             sale_id=sale_id,
             amount_paid=payment_amount,
@@ -217,6 +220,7 @@ def update_sale(sale_id: int, sale: schemas.SaleCreate, db: Session = Depends(ge
             recorded_by=actor
         )
         db.add(history_entry)
+        print(f"[DEBUG] PaymentHistory entry added to session")
 
         inc = Income(
             source=customer_label,
@@ -228,8 +232,10 @@ def update_sale(sale_id: int, sale: schemas.SaleCreate, db: Session = Depends(ge
             notes=f"Payment for INV-{sale_id}"
         )
         db.add(inc)
+        print(f"[DEBUG] Income entry added to session")
 
     db.commit()
+    print(f"[DEBUG] Transaction committed for sale {sale_id}")
     db.refresh(existing_sale)
     return existing_sale
 

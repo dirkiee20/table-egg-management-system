@@ -43,6 +43,14 @@ app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 # Core modules router
 app.include_router(endpoints.router, prefix="/api", tags=["Core Modules"])
 
-@app.get("/")
+@router.get("/")
 def read_root():
     return {"status": "Backend is running actively", "docs": "Visit /docs for OpenAPI specifications"}
+
+@app.get("/debug/tables")
+def debug_tables():
+    """Debug endpoint to check if payment_history table exists"""
+    from sqlalchemy import inspect
+    inspector = inspect(engine)
+    tables = inspector.get_table_names()
+    return {"tables": tables, "has_payment_history": "payment_history" in tables}

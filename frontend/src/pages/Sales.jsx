@@ -112,33 +112,13 @@ const Sales = () => {
     setPaymentError(null);
     try {
       const amountNum = Number(paymentAmount);
-      const newBalance = Math.max(0, (paymentSale.balance || 0) - amountNum);
-      let newStatus = 'Unpaid';
-      if (newBalance === 0) newStatus = 'Paid';
-      else if (newBalance < paymentSale.total) newStatus = 'Partial';
 
-      // Use the existing PUT /sales/{id} endpoint — backend now auto-creates history
-      const payload = {
-        customer_name: paymentSale.customer_name || paymentSale.customer,
-        customer: paymentSale.customer || paymentSale.customer_name,
-        contact_no: paymentSale.contact_no || '',
-        address: paymentSale.address || '',
-        date: paymentDate,
-        traysSold: paymentSale.traysSold,
-        jumbo: paymentSale.jumbo || 0,
-        extralarge: paymentSale.extralarge || 0,
-        large: paymentSale.large || 0,
-        medium: paymentSale.medium || 0,
-        small: paymentSale.small || 0,
-        peewee: paymentSale.peewee || 0,
-        pricePerTray: paymentSale.pricePerTray,
-        total: paymentSale.total,
-        balance: Number(newBalance.toFixed(2)),
-        status: newStatus,
-        staff_incharge: paymentSale.staff_incharge || '',
-      };
-
-      await api.sales.update(paymentSale.id, payload);
+      // Use the dedicated POST /sales/{id}/payments endpoint
+      await api.sales.recordPayment(paymentSale.id, {
+        amount_paid: amountNum,
+        payment_date: paymentDate,
+        notes: paymentNotes || null
+      });
 
       // Reload the full sales list
       const freshSales = await api.sales.getAll();
