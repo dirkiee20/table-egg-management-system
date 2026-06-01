@@ -6,7 +6,10 @@ from app.migrate import run_migrations
 from app.routers import auth
 from app.routers import endpoints
 
-# Create tables
+# Import ALL models so Base.metadata knows about every table before create_all
+import app.models  # noqa: F401 — registers all ORM models with Base
+
+# Create tables (including payment_history)
 Base.metadata.create_all(bind=engine)
 if IS_SQLITE:
     run_migrations()

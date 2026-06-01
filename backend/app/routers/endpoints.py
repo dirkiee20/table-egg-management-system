@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import User, Flock, Production, Inventory, Sale, Income, Expense, CalendarEvent, Vaccination, Hatchery, Staff
+from app.models import User, Flock, Production, Inventory, Sale, Income, Expense, CalendarEvent, Vaccination, Hatchery, Staff, FeedConsumption, PaymentHistory
 import app.schemas as schemas
 from app.routers.auth import get_current_user
 from app.core.security import get_password_hash
@@ -207,7 +207,6 @@ def update_sale(sale_id: int, sale: schemas.SaleCreate, db: Session = Depends(ge
 
     # If balance decreased, record a payment history entry
     if payment_amount > 0:
-        from app.models import PaymentHistory
         history_entry = PaymentHistory(
             sale_id=sale_id,
             amount_paid=payment_amount,
@@ -447,7 +446,6 @@ def delete_staff(staff_id: int, db: Session = Depends(get_db), _: User = Depends
     return {"message": "Staff deleted successfully"}
 
 # --- FEED MANAGEMENT ---
-from app.models import FeedConsumption
 @router.get("/feed", response_model=list[schemas.FeedConsumptionResponse])
 def get_feed_consumption(db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     return db.query(FeedConsumption).all()
@@ -472,12 +470,10 @@ def get_payment_history(sale_id: int, db: Session = Depends(get_db), _: User = D
     sale = db.query(Sale).filter(Sale.id == sale_id).first()
     if not sale:
         raise HTTPException(status_code=404, detail="Sale not found")
-    from app.models import PaymentHistory
     return db.query(PaymentHistory).filter(PaymentHistory.sale_id == sale_id).order_by(PaymentHistory.id.asc()).all()
 
 @router.post("/sales/{sale_id}/payments", response_model=schemas.PaymentHistoryResponse)
 def record_payment(sale_id: int, payment: schemas.PaymentHistoryCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    from app.models import PaymentHistory
     sale = db.query(Sale).filter(Sale.id == sale_id).first()
     if not sale:
         raise HTTPException(status_code=404, detail="Sale not found")
