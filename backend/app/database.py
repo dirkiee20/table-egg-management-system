@@ -20,13 +20,24 @@ def get_database_url() -> str:
     if database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql://", 1)
 
+    # Pin the driver explicitly to psycopg (v3), which is what requirements.txt
+    # installs. SQLAlchemy's default driver for plain postgresql:// URLs differs
+    # between versions (psycopg2 in 2.0, psycopg in 2.1).
+    if database_url.startswith("postgresql://"):
+        database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+
     return database_url
 
 
 SQLALCHEMY_DATABASE_URL = get_database_url()
 IS_SQLITE = SQLALCHEMY_DATABASE_URL.startswith("sqlite")
 
-connect_args = {"check_same_thread": False} if IS_SQLITE else {}
+if IS_SQLITE:
+    connect_args = {"check_same_thread": False}
+else:
+    # Supabase's transaction pooler (port 6543) does not support prepared
+    # statements, which psycopg v3 otherwise creates automatically.
+    connect_args = {"prepare_threshold": None}
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
