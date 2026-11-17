@@ -72,9 +72,9 @@ const AppRoutes = () => {
                 <Route path="/feed" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]}><FeedManagement /></ProtectedRoute>} />
                 <Route path="/vaccinations" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]}><VaccinationRecords /></ProtectedRoute>} />
                 <Route path="/hatchery" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]}><HatcheryRecords /></ProtectedRoute>} />
+                <Route path="/flocks" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]}><FlockManagement /></ProtectedRoute>} />
 
                 {/* ----- ADMIN ONLY ACCESS ----- */}
-                <Route path="/flocks" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]}><FlockManagement /></ProtectedRoute>} />
                 <Route path="/sales" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.STAFF]}><Sales /></ProtectedRoute>} />
                 <Route path="/sales-monitoring" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]}><SalesMonitoring /></ProtectedRoute>} />
                 <Route path="/pricing" element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]}><Pricing /></ProtectedRoute>} />

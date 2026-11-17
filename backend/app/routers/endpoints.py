@@ -38,7 +38,7 @@ def get_flocks(db: Session = Depends(get_db), _: User = Depends(get_current_user
     return db.query(Flock).all()
 
 @router.post("/flocks", response_model=schemas.FlockResponse)
-def create_flock(flock: schemas.FlockCreate, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+def create_flock(flock: schemas.FlockCreate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     new_record = Flock(**flock.dict())
     db.add(new_record)
     db.commit()
@@ -46,7 +46,7 @@ def create_flock(flock: schemas.FlockCreate, db: Session = Depends(get_db), _: U
     return new_record
 
 @router.put("/flocks/{flock_id}", response_model=schemas.FlockResponse)
-def update_flock(flock_id: int, flock: schemas.FlockCreate, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+def update_flock(flock_id: int, flock: schemas.FlockCreate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     existing = db.query(Flock).filter(Flock.id == flock_id).first()
     if not existing:
         raise HTTPException(status_code=404, detail="Flock not found")
@@ -66,7 +66,7 @@ def update_flock(flock_id: int, flock: schemas.FlockCreate, db: Session = Depend
     return existing
 
 @router.delete("/flocks/{flock_id}")
-def delete_flock(flock_id: int, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+def delete_flock(flock_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     existing = db.query(Flock).filter(Flock.id == flock_id).first()
     if not existing:
         raise HTTPException(status_code=404, detail="Flock not found")
